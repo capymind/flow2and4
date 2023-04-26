@@ -1,0 +1,26 @@
+{% extends "index.html.jinja" %}
+
+{% block css %}
+<!-- highlight: code syntax highlight -->
+<link rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+{% endblock css %}
+
+
+{% block main %}
+<div class="container mt-3 pt-5">
+    <div>
+        <span class="display-5 pyduck-title__duckwave_pg">Programming</span>
+    </div>
+    {% include "pg/shapes.svg" %}
+    <a href="{{ url_for('pg.inheritance') }}">초코</a>
+</div>
+{% endblock main %}
+
+
+{% block javascript %}
+{{ super() }}
+<!-- highlight: code syntax highlight -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+{% endblock javascript %}

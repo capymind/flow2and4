@@ -1,0 +1,66 @@
+{# <!--
+====================================================
+avatar_dropdown.html.jinja
+----------------------------------------------------
+[What does this fragment do?]
+    Part of header. provide user avatar after login
+====================================================
+--> #}
+<div class="btn-group">
+    <button class="btn btn-outline-secondary border-0 rounded-circle dropdown-toggle no-caret p-2" type="button"
+            data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false" data-bs-offset="0,20">
+        <img class="rounded-circle" src="{{ current_user.avatar.url }}"
+             width="32" height="32">
+    </button>
+    <ul class="dropdown-menu dropdown-menu-start dropdown-menu-lg-end pt-0" style="width:var(--size-fluid-9)">
+        <li class="bg-success-subtle rounded-2 py-3 px-2 border-bottom">
+            <div class="d-flex align-items-center">
+                <div>
+                    <img class="rounded-circle"
+                         src="{{ current_user.avatar.url }}" width="50"
+                         height="50">
+                </div>
+                <div class="ps-3">
+                    <div class="fw-bold">{{current_user.nickname}} </div>
+                    <div><small>{{ current_user.username }}</small></div>
+                </div>
+            </div>
+        </li>
+        <li>
+            <hr class="dropdown-divider mt-0">
+        </li>
+        {# <li>
+            <a class="dropdown-item d-flex align-items-center" href="{{ url_for('auth.myaccount') }}">
+                <div class="ps-3 fs-4 fw-bold">
+                    <i class="bi bi-person-vcard"></i>
+                </div>
+                <div class="ps-4">
+                    <span>계정 관리</span>
+                </div>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item d-flex align-items-center" href="{{ url_for('auth.myactivities') }}">
+                <div class="ps-3 fs-4 fw-bold">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div class="ps-4">
+                    <span>활동 내역</span>
+                </div>
+            </a>
+        </li>
+        <li>
+            <hr class="dropdown-divider">
+        </li> #}
+        <li>
+            <a class="dropdown-item d-flex align-items-center" href="{{ url_for('auth.sign_out') }}">
+                <div class="ps-3 fs-4 fw-bold">
+                    <i class="bi bi-box-arrow-right"></i>
+                </div>
+                <div class="ps-4">
+                    <span>로그아웃</span>
+                </div>
+            </a>
+        </li>
+    </ul>
+</div>

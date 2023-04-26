@@ -1,0 +1,63 @@
+{% extends 'index.html.jinja' %}
+
+
+{% block main %}
+<div class="container mt-5 pt-5">
+    <section class="col col-lg-6 justify-content-center mx-auto text-center" hx-target="this">
+        <h1 class="fs-3 fw-bold">회원가입</h1>
+        <div class="pyduck-para pt-3 text-secondary">
+            회원이 되시면 댓글, 피드백이 가능하며
+            뱃지를 모으면서 같이 공부할 수 있습니다.
+            새로운 소식을 받아 보실 수도 있습니다.
+        </div>
+        <form class="pt-5 w-75 mx-auto"
+              hx-post="{{ url_for('auth.sign_up') }}"
+              hx-swap="none"
+              x-data="{
+                usernameexists: false,
+                nicknameexists: false
+              }" @usernameexists="usernameexists=true" @nicknameexists="nicknameexists=true">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-floating">
+                <input type="text" class="form-control" name="nickname" id="nickname" placeholder="Nickname"
+                       minlength="2"
+                       maxlength="20" required>
+                <label for="nickname">닉네임</label>
+            </div>
+            <template x-if="nicknameexists">
+                <div class="text-danger text-start ps-1">
+                    <i class="bi bi-x-circle"></i>
+                    <span>이미 사용 중인 닉네임 입니다.</span>
+                </div>
+            </template>
+            <div class="form-floating mt-3">
+                <input type="email" class="form-control" name="username" id="username" placeholder="name@example.com"
+                       required>
+                <label for="username">이메일 주소</label>
+            </div>
+            <template x-if="usernameexists">
+                <div class="text-danger text-start ps-1">
+                    <i class="bi bi-x-circle"></i>
+                    <span>이미 사용 중인 이메일 입니다.</span>
+                </div>
+            </template>
+            <div class="form-floating mt-3">
+                <input type="password" class="form-control" name="password" id="password" placeholder="Password"
+                       minlength="8"
+                       maxlength="20" required>
+                <label for="password">비밀번호</label>
+            </div>
+            <div class="pt-4">
+                <button class="btn btn-dark form-control">
+                    <span>이메일 인증 후 가입하기</span>
+                </button>
+            </div>
+        </form>
+        <div class="pt-5 text-secondary">
+            <small>
+                이미 회원이신가요? <a class="link link-secondary" href="{{ url_for('auth.sign_in') }}">로그인 하기</a>
+            </small>
+        </div>
+    </section>
+</div>
+{% endblock main %}

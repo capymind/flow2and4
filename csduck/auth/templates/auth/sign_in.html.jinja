@@ -1,0 +1,58 @@
+{% extends 'index.html.jinja' %}
+
+
+{% block main %}
+<div class="container mt-5 pt-5">
+    <section class="col col-lg-6 justify-content-center mx-auto text-center">
+        <h1 class="fs-3 fw-bold">로그인</h1>
+        <div class="pyduck-para pt-3 text-secondary">
+            더 나은 사이트가 되도록 노력하겠습니다.
+            <br>다시 방문해 주셔서 감사합니다.
+        </div>
+        <form class="pt-5 w-75 mx-auto" hx-post="{{ url_for('auth.sign_in') }}" hx-swap="none"
+              x-data="{
+                wronguser: false,
+                wrongpassword: false
+            }" @wronguser="wronguser=true" @wrongpassword="wrongpassword=true">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-floating">
+                <input type="email" class="form-control" id="username" name="username" placeholder="name@example.com"
+                       required>
+                <label for="username">이메일 주소</label>
+            </div>
+            <template x-if="wronguser">
+                <div class="pt-1 ps-1 text-danger text-start">
+                    <i class="bi bi-x-circle"></i>
+                    <span class="ps-1">존재하지 않는 이메일 입니다.</span>
+                </div>
+            </template>
+            <div class="form-floating mt-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password"
+                       required>
+                <label for="password">비밀번호</label>
+                <div class="pt-1 text-start">
+                    <small class="text-secondary">설마... 기억이 안나시나요?
+                        <a class="link link-secondary" href="{{ url_for('auth.forgot_password') }}">초기화하기</a>
+                    </small>
+                </div>
+            </div>
+            <template x-if="wrongpassword">
+                <div class="pt-1 ps-1 text-danger text-start">
+                    <i class="bi bi-x-circle"></i>
+                    <span class="ps-1">올바르지 않는 비밀번호입니다. 다시 한번 확인해주세요.</span>
+                </div>
+            </template>
+            <div class="pt-4">
+                <button class="btn btn-dark form-control">
+                    <span>로그인 하기</span>
+                </button>
+            </div>
+        </form>
+        <div class="pt-5 text-secondary">
+            <small>
+                아직 회원이 아니신가요? <a class="link text-secondary" href="{{ url_for('auth.sign_up') }}">회원가입 하기</a>
+            </small>
+        </div>
+    </section>
+</div>
+{% endblock main %}

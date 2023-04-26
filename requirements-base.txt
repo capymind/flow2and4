@@ -1,0 +1,31 @@
+requests
+bs4
+
+sqlalchemy
+alembic
+
+pydantic
+
+pandas
+numpy
+
+flask
+
+gunicorn
+gevent
+
+
+# flask extensions
+Flask-sqlalchemy
+Flask-Migrate
+Flask-WTF
+    email-validator
+flask-login
+flask-bcrypt
+
+
+python-multipart
+python-dotenv
+
+# pandas for read_excel
+openpyxl

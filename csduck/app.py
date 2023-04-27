@@ -22,6 +22,7 @@ def create_app(mode: str = "dev"):
         from csduck.config import WebProdConfig
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.config.from_object(WebProdConfig())
+        app.config["SERVER_NAME"] = "flow2and4.me"
         # Tell Flask it is Behind a Proxy
         # https://flask.palletsprojects.com/en/2.3.x/deploying/proxy_fix/
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)

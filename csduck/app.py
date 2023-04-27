@@ -21,7 +21,7 @@ def create_app(mode: str = "dev"):
     if mode == "prod":
         from csduck.config import WebProdConfig
         from werkzeug.middleware.proxy_fix import ProxyFix
-
+        app.config["SERVER_NAME"] = "csduck"
         app.config.from_object(WebProdConfig())
         # Tell Flask it is Behind a Proxy
         # https://flask.palletsprojects.com/en/2.3.x/deploying/proxy_fix/
@@ -64,12 +64,14 @@ def create_app(mode: str = "dev"):
     from csduck.duckwave_ms.views import bp as bp_duckwave_ms
     from csduck.duckwave_os.views import bp as bp_duckwave_os
     from csduck.duckwave_pg.views import bp as bp_duckwave_pg
+    from csduck.duckwave_cn.views import bp as bp_duckwave_cn
 
-    app.register_blueprint(bp)
-    app.register_blueprint(bp_auth)
-    app.register_blueprint(bp_duckwave_ms)
-    app.register_blueprint(bp_duckwave_os)
-    app.register_blueprint(bp_duckwave_pg)
+    app.register_blueprint(bp, subdomain="csduck")
+    app.register_blueprint(bp_auth, subdomain="csduck")
+    app.register_blueprint(bp_duckwave_ms, subdomain="csduck")
+    app.register_blueprint(bp_duckwave_os, subdomain="csduck")
+    app.register_blueprint(bp_duckwave_pg, subdomain="csduck")
+    app.register_blueprint(bp_duckwave_cn, subdomain="csduck")
     # Register blueprints [END]
 
     return app

@@ -14,4 +14,4 @@ RUN pip install -r requirements-base.txt
 # copy project
 COPY . .
 
-CMD ["gunicorn", "--workers", "4", "--worker-class", "gevent", "-b", "0.0.0.0", "--reload", "csduck.app:create_app()"]
+CMD ["gunicorn", "--workers", "4", "--worker-class", "gevent", "-b", "0.0.0.0", "--reload", "csduck.app:create_app(mode='prod')"]

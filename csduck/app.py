@@ -21,7 +21,6 @@ def create_app(mode: str = "dev"):
     if mode == "prod":
         from csduck.config import WebProdConfig
         from werkzeug.middleware.proxy_fix import ProxyFix
-        app.config["SERVER_NAME"] = "csduck"
         app.config.from_object(WebProdConfig())
         # Tell Flask it is Behind a Proxy
         # https://flask.palletsprojects.com/en/2.3.x/deploying/proxy_fix/

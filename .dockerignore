@@ -1,6 +1,7 @@
 # [START] csduck customized
 **/*.db
 *.db
+docker
 # csduck customized [END]
 
 

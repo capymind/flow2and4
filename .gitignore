@@ -2,6 +2,8 @@
 .env
 .env.test
 .env.prod
+docker/certbot/conf/*
+!docker/certbot/conf/sample.html
 # csduck [END]
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,flask,linux,windows,visualstudiocode

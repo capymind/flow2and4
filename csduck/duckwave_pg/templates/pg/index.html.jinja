@@ -2,18 +2,20 @@
 
 {% block css %}
 <!-- highlight: code syntax highlight -->
-<link rel="stylesheet"
-      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
 {% endblock css %}
 
 
 {% block main %}
 <div class="container mt-3 pt-5">
     <div>
-        <span class="display-5 pyduck-title__duckwave_pg">Programming</span>
+        <span class="display-5 pyduck-title__duckwave_pg">Fundamentals of Programming</span>
     </div>
-    {% include "pg/shapes.svg" %}
-    <a href="{{ url_for('pg.inheritance') }}">초코</a>
+    <div class="pt-5">
+        {% include "pg/shapes.svg" %}
+    </div>
+    <a href="{{ url_for('pg.topic', topic='inheritance') }}">초코</a>
+    <a href="{{ url_for('pg.topic', topic='functional-programming') }}">초코</a>
 </div>
 {% endblock main %}
 

@@ -21,6 +21,7 @@ def create_app(mode: str = "dev"):
     if mode == "prod":
         from csduck.config import WebProdConfig
         from werkzeug.middleware.proxy_fix import ProxyFix
+
         app.config.from_object(WebProdConfig())
         app.config["SERVER_NAME"] = "flow2and4.me"
         # Tell Flask it is Behind a Proxy
@@ -72,6 +73,18 @@ def create_app(mode: str = "dev"):
     app.register_blueprint(bp_duckwave_os, subdomain="csduck")
     app.register_blueprint(bp_duckwave_pg, subdomain="csduck")
     app.register_blueprint(bp_duckwave_cn, subdomain="csduck")
+
+    from csduck.rodi.views import bp as bp_rodi
+
+    app.register_blueprint(bp_rodi)
+
+    from csduck.faduck.views import bp as bp_faduck
+
+    app.register_blueprint(bp_faduck, subdomain="faduck")
+
+    from csduck.pyduck.views import bp as bp_pyduck
+
+    app.register_blueprint(bp_pyduck, subdomain="pyduck")
     # Register blueprints [END]
 
     return app

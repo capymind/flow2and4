@@ -1,0 +1,32 @@
+{% extends "pyduck/base.html.jinja" %}
+
+{% block css %}
+<style>
+    .hero__title {
+        background: var(--gradient-2);
+        font-weight: var(--font-weight-9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero__subtitle {
+        background: var(--gradient-1);
+        font-weight: var(--font-weight-7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+{% endblock css %}
+
+{% block main %}
+<div class="container">
+    <section class="py-5">
+        <div class="text-center">
+            <span class="display-4 hero__title"><i class="bi bi-tropical-storm"></i>pyduck</span>
+            <div class="pt-3">
+                <span class="fs-3 hero__subtitle">community for pythonista in Korea</span>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock main%}

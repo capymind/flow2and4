@@ -22,8 +22,8 @@ def index():
     return render_template("pg/index.html.jinja")
 
 
-@bp.route("/inheritance", methods=[HTTPMethod.GET])
-def inheritance():
+@bp.route("/<topic>", methods=[HTTPMethod.GET])
+def topic(topic: str):
     """Show Inheritance and Object-oriented Design page."""
 
-    return render_template("pg/inheritance.html.jinja")
+    return render_template(f"pg/{topic}.html.jinja")

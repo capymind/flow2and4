@@ -16,5 +16,8 @@ naming_convention = {
 }
 
 metadata = MetaData(naming_convention=naming_convention)
+
+
 db = SQLAlchemy(metadata=metadata)
+
 migrate = Migrate()

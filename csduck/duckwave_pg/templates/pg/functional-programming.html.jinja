@@ -24,61 +24,51 @@
                 <span class="display-5 pyduck-title__duckwave_pg">Functional Programming</span>
             </div>
             <div class="fs-3 fw-bold">1) Introduction</div>
-
             <div class="pt-3 para">
-                In the last reading, we introduced the class keyword, which allows us to make new types of Python
-                objects. While using classes is not strictly necessary (in the sense that any program that we can write
-                using classes could also be written without them), they turn out to be a powerful organizational tool,
-                and, as we saw last week, they also give us some neat ways to integrate our custom types into Python so
-                that they can make use of built-in operators and functions.
+                Functions were one of the first Python features that we studied this semester, but they are a remarkably
+                versatile feature that deserves more attention. Functional programming is a classic programming style
+                heavily focused on functions. As recently as the mid-2000s, functional programming was seen by industry
+                as a niche academic idea, but, in the mean time, it went quite mainstream. While it was originally
+                associated with distinct programming languages like Haskell, many of its best ideas were adopted by
+                better-known languages like Python. We've been using those features (like lambda) all along this
+                semester, and this reading will show you even more handy patterns in functional programming.
             </div>
             <div class="pt-3 para">
-                In this reading, we'll build on what we learned last week and introduce several new features that we can
-                make
-                use of when defining classes of our own, and we hope to do this in a way that demonstrates the power of
-                classes
-                as an organizational tool.
+                As it happens, one of the first programming languages that worked on multiple different kinds of
+                computers was LISP, and it arguably introduced functional programming as a practical style, way back in
+                1958. This week's lab will lead you through implementing your own subset of LISP. Getting a better
+                understanding of functions and their uses is also directly relevant to that experience.
+            </div>
+            <div class="pt-3 fs-3 fw-bold">
+                2) More Iteratin to Recursion
             </div>
             <div class="pt-3 para">
-                We're going to start this reading with somewhat-small, somewhat-contrived examples that we'll use to
-                review
-                some
-                of the features introduced in the last reading and also to introduce the idea of inheritance. Once we've
-                walked
-                through several examples like that, we'll pull back and take a look at using these ideas to organize a
-                bigger,
-                more-authentic program.
+                One interesting feature of LISP is that it does not feature any looping structures (there are no
+                <code>for</code> or
+                <code>while</code> loops). But it does have functions, and, as we've seen before, it's possible to use
+                functions to
+                implement loops. One of the first examples we looked at, factorial, could always be written with a loop
+                like so:
             </div>
-            <div class="pt-3 para">
-                But we'll start with a small example, which should just be review from last time:
+            <div class="para">
                 <pre><code class="language-python">
-x = "dog"
-
-class A:
-    pass
-
-a = A()
-print(a.x)
+def factorial(n):
+    result = 1
+    for i in range(1, n+1):
+        result *= i
+    return result
                 </code></pre>
             </div>
-            <div class="question p-3 border rounded-2">
-                Which of the following is printed when we run this program? Using the rules established in the last
-                reading, draw an environment diagram to explain this result.
+            <div class="pt-3 para">
+                But we also learned that it can be written recursively as a one-liner.
             </div>
             <div class="pt-3 para">
-                Now, let's consider a slight modification of the program above (where the body of the <code>A</code>
-                class is <code>x = 'cat'</code> rather than <code>pass</code>):
-                <pre data-line="4">
-<code class="language-python">x = "dog"
-
-class A:
-    x = "cat"
-
-a = A()
-print(a.x)
-</code></pre>
-
+                <pre><code class="language-python">
+def factorial(n):
+    return 1 if n <= 1 else n * factorial(n-1)
+                </code></pre>
             </div>
+
         </div>
     </div>
 </div>

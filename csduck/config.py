@@ -15,10 +15,18 @@ class WebConfig(BaseSettings):
 
     # The database connection URI used for the default engine.
     SQLALCHEMY_DATABASE_URI: str
+    SQLALCHEMY_BINDS: dict
+
+    # The page they were attempting to access will be passed in the `next`
+    # query string variable, so you can redirect there if present instead of
+    # the homepage. Alternatively(NOW), it will be added to the session as
+    # `next` if `USE_SESSION_FOR_NEXT` is set.
+    USE_SESSION_FOR_NEXT: bool = True
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        env_nested_delimiter = "__"
 
 
 class WebTestConfig(WebConfig):

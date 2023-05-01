@@ -1,0 +1,27 @@
+{% extends "pyduck/base.html.jinja" %}
+
+
+{% block css %}
+{{ super() }}
+<style>
+
+</style>
+{% endblock css%}
+
+{% block main %}
+<div class="container">
+    <div class="row pt-5">
+        <div class="d-flex flex-column justify-content-center align-items-center">
+            <div class="pt-3 display-3 fw-bold">
+                <span class="logo-color"><i class="bi bi-tropical-storm"></i>pyduck</span>
+            </div>
+            <div class="pt-5 display-5 fw-bold text-center">
+                <span>
+                    404 NOT FOUND.
+                    <br>존재하지 않는 페이지 입니다.
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock main %}

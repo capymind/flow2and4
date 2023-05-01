@@ -1,0 +1,80 @@
+{% extends "pyduck/base.html.jinja" %}
+
+
+{% block main %}
+{% set c = sidebar_community | selectattr("code", "eq", "help") | list | first %}
+<div class="container pt-5 px-5">
+    <div class="row">
+        <div class="col">
+            <div>
+                <div class="fs-4 fw-bold">
+                    {{ q.title }} <span class="text-secondary">#{{ q.id }}</span>
+                </div>
+                <div class="pt-2">
+                    {% if not q.answered %}
+                    <small class="border rounded-pill px-3 py-1">답변없음</small>
+                    {% endif %}
+                    <small>
+                        <span class="fw-bold">{{ q.user.nickname }}</span>님께서
+                        <span class="fw-bold">{{ c.name }}</span>에 작성해주셨습니다.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-8 p-3 border rounded-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <img class="rounded-circle" src="{{ q.user.avatar.url }}" width="33" height="33">
+                    <span>{{ q.user.nickname }}</span>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if q.history|length %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <small>수정이력</small>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end px-3">
+                            <div>{{ q.history|length}}번 수정됨</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item"
+                                   href="{{ url_for('pyduck.community.question_edit', question_id=q.id) }}">수정하기</a>
+                            </li>
+                            <li><a class="dropdown-item" href="#">삭제하기</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4">
+                {{ q.content }}
+            </div>
+            <div class="pt-4">
+                <form hx-post="{{ url_for('pyduck.community.question_vote', question_id=q.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-up"></i> <span>{{ q.vote_count }}</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock main %}
+
+
+{% block javascript %}
+{{ super() }}
+<script>
+
+</script>
+{% endblock javascript %}

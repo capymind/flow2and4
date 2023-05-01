@@ -20,3 +20,10 @@ def index():
     """Show OS(Operating Systems) index page."""
 
     return render_template("os/index.html.jinja")
+
+
+@bp.route("/<topic>", methods=[HTTPMethod.GET])
+def topic(topic: str):
+    """Show specific topic page."""
+
+    return render_template(f"os/{topic}.html.jinja")

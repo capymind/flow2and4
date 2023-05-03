@@ -1,0 +1,147 @@
+{% from "community/answer/render_vote.html.jinja" import render_vote with context %}
+{% from "community/answer/render_reaction.html.jinja" import render_reaction with context %}
+{% macro render_answer(answer) %}
+<div
+     x-data="{
+        editmode: false,
+        commentmode: false
+    }"
+     data-pd-answer="{{ answer.id }}"
+     @comment-created="commentmode=false">
+    <div class="row mt-3">
+        <div class="col-8">
+            <div class="p-3 border rounded-2"
+                 x-show="!editmode">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <img class="rounded-circle" src="{{ answer.user.avatar.url }}" width="33" height="33">
+                        <span>{{ answer.user.nickname }}</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if answer.history|length %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <small>수정이력</small>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end px-3">
+                                <div>{{ answer.history|length}}번 수정됨</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <button class="dropdown-item"
+                                            type="button"
+                                            @click="editmode=true; 
+                                            $nextTick(() => { 
+                                                $dispatch(
+                                                    'require-editor', { target: 'answer', id: '{{ answer.id }}' }
+                                                ) 
+                                            })">
+                                        수정하기
+                                    </button>
+                                </li>
+                                <li><a class="dropdown-item" href="#">삭제하기</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-4">
+                    {{ answer.content }}
+                </div>
+                <div class="pt-4 d-flex justify-content-between">
+                    <div class="d-flex gap-2">
+                        {{ render_vote(answer=answer) }}
+                        {{ render_reaction(answer=answer) }}
+                    </div>
+                    {% if answer.comment_count %}
+                    <div>
+                        <button
+                                class="btn btn-sm btn-outline-secondary border-0"
+                                @click="commentmode=true;
+                                $nextTick(() => {
+                                    $dispatch(
+                                        'require-editor', { target: 'comment', id: '{{ answer.id }}'}
+                                    )
+                                })">
+                            <span class="fst-italic text-underline"><u>댓글 {{ answer.comment_count }}개 보기</u></span>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <button
+                            class="btn btn-sm btn-outline-secondary border-0"
+                            x-show="!commentmode"
+                            @click="commentmode=true;
+                                $nextTick(() => {
+                                    $dispatch(
+                                        'require-editor', { target: 'comment', id: '{{ answer.id }}'}
+                                    )
+                                })">
+                        <span class="fst-italic text-underline"><u>댓글 달기</u></span>
+                    </button>
+                </div>
+                <div class="comments mt-2 bg-body-secondary rounded-2" data-pd-comments="{{ answer.id }}">
+
+                </div>
+                <template x-if="commentmode">
+                    <div class="py-4 px-3 rounded-2 bg-body-tertiary mt-2">
+                        <form
+                              class="answer"
+                              hx-post="{{ url_for('pyduck.community.comment_to_answer') }}"
+                              hx-swap="beforeend"
+                              hx-target="[data-pd-comments='{{ answer.id }}']">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="answer_id" value="{{ answer.id }}">
+                            <textarea name="content" data-pd-comment-editor="{{ answer.id }}">
+                            </textarea>
+                            <div class="pt-2 text-end">
+                                <button
+                                        class="btn btn-secondary rounded-0"
+                                        type="button"
+                                        @click="commentmode=false">
+                                    취소하기
+                                </button>
+                                <button class="btn btn-primary rounded-0">
+                                    댓글달기
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </template>
+            </div>
+            <template x-if="editmode">
+                <form
+                      class="answer"
+                      hx-put="{{ url_for('pyduck.community.answer') }}"
+                      hx-swap="outerHTML"
+                      hx-target="[data-pd-answer='{{ answer.id }}']">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="answer_id" value="{{ answer.id }}">
+                    <textarea name="content" data-pd-editor-id="{{ answer.id }}">
+                        {{ answer.content }}
+                    </textarea>
+                    <div class="pt-2 text-end">
+                        <button
+                                class="btn btn-secondary rounded-0"
+                                type="button"
+                                @click="editmode=false">
+                            취소하기
+                        </button>
+                        <button class="btn btn-primary rounded-0">
+                            수정하기
+                        </button>
+                    </div>
+                </form>
+            </template>
+        </div>
+    </div>
+</div>
+{% endmacro %}

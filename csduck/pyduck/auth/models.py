@@ -36,3 +36,17 @@ class User(db.Model):
 
     # relationship
     avatar: Mapped[PyduckUserAvatar] = relationship()
+
+
+class UserVerificationEmail(db.Model):
+    """Represent user verification email."""
+
+    __bind_key__ = "pyduck"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id = mapped_column(ForeignKey("user.id"))
+    vcode: Mapped[str]
+    created_at: Mapped[str]
+
+    # relationship
+    user: Mapped[User] = relationship("pyduck.auth.models.User")

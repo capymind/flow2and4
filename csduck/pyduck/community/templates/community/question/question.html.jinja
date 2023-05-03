@@ -1,8 +1,14 @@
 {% extends "pyduck/base.html.jinja" %}
 
 
+{% from "community/question/render_vote.html.jinja" import render_vote %}
+{% from "community/question/render_reaction.html.jinja" import render_reaction with context %}
+{% from "community/answer/render_answer.html.jinja" import render_answer with context %}
+
+
 {% block main %}
-{% set c = sidebar_community | selectattr("code", "eq", "help") | list | first %}
+{% set c = sidebar_community|selectattr("code", "eq", "help")|list|first %}
+{% set voted = q.votes|selectattr("user_id", "eq", current_user.id)|list|length %}
 <div class="container pt-5 px-5">
     <div class="row">
         <div class="col">
@@ -23,48 +29,94 @@
         </div>
     </div>
     <div class="row mt-3">
-        <div class="col-8 p-3 border rounded-2">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <img class="rounded-circle" src="{{ q.user.avatar.url }}" width="33" height="33">
-                    <span>{{ q.user.nickname }}</span>
-                </div>
-                <div class="d-flex gap-2">
-                    {% if q.history|length %}
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                            <small>수정이력</small>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end px-3">
-                            <div>{{ q.history|length}}번 수정됨</div>
+        <div class="col-8">
+            <div class="p-3 border rounded-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <img class="rounded-circle" src="{{ q.user.avatar.url }}" width="33" height="33">
+                        <span>{{ q.user.nickname }}</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if q.history|length %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <small>수정이력</small>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end px-3">
+                                <div>{{ q.history|length}}번 수정됨</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item"
+                                       href="{{ url_for('pyduck.community.question_edit', question_id=q.id) }}">수정하기</a>
+                                </li>
+                                <li><a class="dropdown-item" href="#">삭제하기</a></li>
+                            </ul>
                         </div>
                     </div>
-                    {% endif %}
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-three-dots"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item"
-                                   href="{{ url_for('pyduck.community.question_edit', question_id=q.id) }}">수정하기</a>
-                            </li>
-                            <li><a class="dropdown-item" href="#">삭제하기</a></li>
-                        </ul>
-                    </div>
+                </div>
+                <div class="pt-4">
+                    {{ q.content }}
+                </div>
+                <div class="pt-4 d-flex gap-2">
+                    {{ render_vote(question=q, voted=voted) }}
+                    {{ render_reaction(question=q) }}
                 </div>
             </div>
-            <div class="pt-4">
-                {{ q.content }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col pt-3">
+            <div class="d-flex">
+                <div>{{ q.comment_count }}개의 댓글</div>
+                <div>
+
+                </div>
             </div>
-            <div class="pt-4">
-                <form hx-post="{{ url_for('pyduck.community.question_vote', question_id=q.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-up"></i> <span>{{ q.vote_count }}</span>
-                    </button>
-                </form>
+        </div>
+    </div>
+</div>
+<div class="container px-5 pt-2 answers">
+    {% for answer in ap %}
+    {{ render_answer(answer) }}
+    {% endfor %}
+</div>
+<div class="container px-5 pb-5">
+    <div class="row">
+        <div class="col-8 pt-3">
+            <div x-data="{
+                    editmode: false
+                }"
+                 @answer-created="editmode=false">
+                <button
+                        class="btn btn-outline-secondary w-100"
+                        @click="editmode=true; $nextTick(() => {$dispatch('require-editor')})"
+                        x-show="!editmode">
+                    <span>답변 작성하기</span>
+                </button>
+                <template x-if="editmode">
+                    <form class="border rounded-2 p-3 answer"
+                          hx-post="{{ url_for('pyduck.community.answer')}}"
+                          hx-target=".answers"
+                          hx-swap="beforeend">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="question_id" value="{{ q.id }}">
+                        <textarea id="editor" name="content"></textarea>
+                        <div class="pt-2 text-end">
+                            <button type="button"
+                                    class="btn btn-secondary rounded-0"
+                                    @click="editmode=false">취소하기</button>
+                            <button class="btn btn-success rounded-0">등록하기</button>
+                        </div>
+                    </form>
+                </template>
             </div>
         </div>
     </div>
@@ -75,6 +127,32 @@
 {% block javascript %}
 {{ super() }}
 <script>
+    document.body.addEventListener("require-editor", (e) => {
 
+        let _selector;
+        if (e.detail.target === 'answer') {
+            _selector = `[data-pd-editor-id='${e.detail.id}']`
+        } else if(e.detail.target === 'comment') {
+            _selector = `[data-pd-comment-editor='${e.detail.id}']`
+        } else {
+            _selector = '#editor'
+        }
+
+        ClassicEditor
+            .create(document.querySelector(_selector), {
+                simpleUpload: {
+                    uploadUrl: "{{ url_for('pyduck.community.image_upload', category='help') }}",
+                    headers: {
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                    }
+                }
+            })
+            .then((editor) => {
+                htmx.process(document.body);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    })
 </script>
 {% endblock javascript %}

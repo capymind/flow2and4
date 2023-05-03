@@ -2,6 +2,7 @@
 This is the module for handling requests related to pyduck auth.
 """
 
+import uuid
 import json
 from pydantic import ValidationError
 from flask import (
@@ -16,13 +17,21 @@ from flask import (
 from flask_bcrypt import generate_password_hash, check_password_hash
 from http import HTTPStatus, HTTPMethod
 from flask_login import login_user, logout_user
-from csduck.pyduck.auth.schemas import UserCreate, UserAvatarCreate
+from csduck.pyduck.auth.schemas import (
+    UserCreate,
+    UserAvatarCreate,
+    UserVerificationEmailCreate,
+)
 from csduck.pyduck.auth.service import (
     does_field_value_exist,
     create_user,
     get_user_by_username,
     create_user_avatar,
+    create_user_verification_email,
+    get_user_verification_email,
+    verify_user,
 )
+from csduck.pyduck.auth.helpers import send_sign_up_verification_email
 
 bp = Blueprint(
     "auth",
@@ -56,9 +65,7 @@ def sign_up():
 
         if len(errors) > 0:
             res = make_response()
-            res.headers["HX-Trigger-After-Settle"] = json.dumps(
-                {key: "" for key in errors}
-            )
+            res.headers["HX-Trigger"] = json.dumps({key: "" for key in errors})
             return res, HTTPStatus.BAD_REQUEST
 
         user = create_user(user_in=user_in)
@@ -66,12 +73,56 @@ def sign_up():
         avatar_in = UserAvatarCreate(user_id=user.id)
         create_user_avatar(avatar_in=avatar_in)
 
+        verification_in = UserVerificationEmailCreate(
+            user_id=user.id, vcode=uuid.uuid4().hex
+        )
+        verification = create_user_verification_email(verification_in=verification_in)
+
+        send_sign_up_verification_email(user=user, verification=verification)
+
         res = make_response()
         res.headers["HX-Trigger-After-Settle"] = "user-created"
 
         return res, HTTPStatus.CREATED
 
     return {"message": "success"}
+
+
+@bp.route("/sign-up/verification", methods=[HTTPMethod.GET])
+def sign_up_verification():
+    """
+    (GET) Process sign up verification.
+    """
+
+    username = request.args.get("username")
+    vcode = request.args.get("vcode")
+
+    if username is None or vcode is None:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    user = get_user_by_username(username=username)
+    if user is None:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    verification = get_user_verification_email(user_id=user.id)
+
+    if verification is None:
+        abort(HTTPStatus.BAD_REQUEST)
+    if vcode != verification.vcode:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    verified_user = verify_user(user_id=user.id)
+
+    return redirect(url_for("pyduck.auth.welcome"))
+
+
+@bp.route("/sign-up/welcome", methods=[HTTPMethod.GET])
+def welcome():
+    """
+    (GET) Show welcome page after signing up successfully.
+    """
+
+    return render_template("auth/welcome.html.jinja")
 
 
 @bp.route("/sign-in", methods=[HTTPMethod.GET, HTTPMethod.POST])

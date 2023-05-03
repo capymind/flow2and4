@@ -1,0 +1,40 @@
+{% macro verification(verification_url) %}
+<html>
+
+<head></head>
+
+<body>
+    <div
+         style="width:350px; border: 1px solid black; padding-top: 30px; padding-bottom: 30px; padding-left: 10px; padding-right: 10px; border-radius: 10px;">
+        <div style="text-align:center; font-size: 1.2rem;">
+            pyduck
+        </div>
+        <div style="text-align:center; font-size: 1.2rem; padding-top: 10px; padding-bottom: 15px;">
+            💌회원가입 인증 메일
+        </div>
+        <hr>
+        <div style="padding-top: 10px;">
+            <p>
+                아래 🔗인증링크를 클릭해서
+                <br>회원가입 절차를 완료해주세요.
+            </p>
+            <div style="text-align:center; padding-top: 15px; padding-bottom: 15px;">
+                <div style="font-weight: bold;">
+                    <a href="{{ verification_url }}">{{ verification_url }}</a>
+                </div>
+            </div>
+            <p>
+                인증링크는 하루(24시간) 후에 만료됩니다.
+                <br>
+                더 나은 서비스로 찾아뵙겠습니다.
+            </p>
+            <div style="text-align:right; padding-top: 10px;">
+                pyduck 개발자 로디(rodi) 드림.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+
+{% endmacro %}

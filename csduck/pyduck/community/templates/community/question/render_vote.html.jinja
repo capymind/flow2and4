@@ -1,0 +1,17 @@
+{% macro render_vote(question, voted=false) %}
+{% if voted %}
+<form hx-delete="{{ url_for('pyduck.community.question_vote', question_id=question.id) }}" hx-swap="outerHTML">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline-secondary rounded-pill active">
+        <i class="bi bi-arrow-up"></i> <span>{{ question.vote_count }}</span>
+    </button>
+</form>
+{% else %}
+<form hx-post="{{ url_for('pyduck.community.question_vote', question_id=question.id) }}" hx-swap="outerHTML">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline-secondary rounded-pill">
+        <i class="bi bi-arrow-up"></i> <span>{{ question.vote_count }}</span>
+    </button>
+</form>
+{% endif %}
+{% endmacro %}

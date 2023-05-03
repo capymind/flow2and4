@@ -58,7 +58,29 @@
             height: 300px;
             overflow-y: auto;
         }
+        
+        .answer .ck.ck-content:not(.ck-comment__input *) {
+            height: 150px;
+            overflow-y: auto;
+        }
     </style>
+
+    <style>
+        .hero__title {
+            background: var(--gradient-2);
+            font-weight: var(--font-weight-9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero__subtitle {
+            background: var(--gradient-1);
+            font-weight: var(--font-weight-7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+    
     {% block css %}
     <style>
         .nav-item:hover {
@@ -208,6 +230,8 @@
                 loginRequired: false,
                 showUsernameDontExist: false,
                 showPasswordDontMatch: false,
+                showNicknameExist: false,
+                showUsernameExist: false,
                 handlehtmx() {
                     htmx.process(document.body)
                 },
@@ -218,6 +242,8 @@
             }"
              @modalsignup.document="template='signup'; $nextTick(() => {handlehtmx()})"
              @modalsignin.document="template='signin'; $nextTick(() => {handlehtmx()})"
+             @nickname-exists="showNicknameExist=true"
+             @username-exists="showUsernameExist=true"
              @user-created="template='user-created'"
              @username-dont-exist="showUsernameDontExist=true"
              @password-dont-match="showPasswordDontMatch=true"
@@ -249,6 +275,9 @@
                                     <div class="ps-1">
                                         <small class="text-secondary">아이디 및 인증 용도(타인에게 비공개)</small>
                                     </div>
+                                    <div class="pt-1 ps-2 text-danger" x-show="showUsernameExist">
+                                        <i class="bi bi-x-circle"></i><span class="ps-1">이미 누군가 사용중인 이메일입니다.</span>
+                                    </div>
                                 </div>
                                 <div class="pt-3">
                                     <div class="form-floating">
@@ -268,6 +297,9 @@
                                     </div>
                                     <div class="ps-1">
                                         <small class="text-secondary">2-20자, 공백 불가</small>
+                                    </div>
+                                    <div class="pt-1 ps-2 text-danger" x-show="showNicknameExist">
+                                        <i class="bi bi-x-circle"></i><span class="ps-1">이미 누군가 사용중인 닉네임입니다.</span>
                                     </div>
                                 </div>
                             </div>

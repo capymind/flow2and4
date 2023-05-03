@@ -7,6 +7,22 @@ from datetime import datetime, timezone
 from csduck.pyduck.schemas import PyduckSchema
 
 
+class UserVerificationEmailBase(PyduckSchema):
+    """Represent user verification email."""
+
+    user_id: int
+    vcode: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserVerificationEmailCreate(UserVerificationEmailBase):
+    pass
+
+
+class UserVerificationEmailRead(UserVerificationEmailBase):
+    id: int
+
+
 class UserAvatarBase(PyduckSchema):
     """Represent user abatar."""
 
@@ -48,7 +64,7 @@ class UserRead(UserBase):
     id: int
 
     # relationship
-    avatar: UserAvatarRead
+    avatar: UserAvatarRead | None
 
 
 class UserReadForSession(UserRead):
@@ -60,7 +76,7 @@ class UserReadForSession(UserRead):
 
     @property
     def is_authenticated(self):
-        return True
+        return self.verified
 
     @property
     def is_anonymous(self):

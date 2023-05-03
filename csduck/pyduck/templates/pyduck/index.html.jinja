@@ -1,24 +1,5 @@
 {% extends "pyduck/base.html.jinja" %}
 
-{% block css %}
-{{ super() }}
-<style>
-    .hero__title {
-        background: var(--gradient-2);
-        font-weight: var(--font-weight-9);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .hero__subtitle {
-        background: var(--gradient-1);
-        font-weight: var(--font-weight-7);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-</style>
-{% endblock css %}
-
 {% block main %}
 <div class="container">
     <section class="py-5">

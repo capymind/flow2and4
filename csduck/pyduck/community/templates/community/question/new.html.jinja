@@ -19,7 +19,7 @@
                 <div class="fs-4 fw-bold">
                     <i class="bi bi-pencil-square"></i> 질문 작성 중
                 </div>
-                <form action="{{ url_for('pyduck.community.new_question') }}" method="POST">
+                <form action="{{ url_for('pyduck.community.question_new') }}" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="pt-3">
                         <label for="title" class="form-label fw-bold">질문 제목<sup class="text-danger">*</sup></label>

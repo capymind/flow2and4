@@ -4,13 +4,15 @@ This is the module for handling database transactions related to pyduck auth.
 
 from sqlalchemy import select
 from csduck.database import db
-from csduck.pyduck.auth.models import User, PyduckUserAvatar
+from csduck.pyduck.auth.models import User, PyduckUserAvatar, UserVerificationEmail
 from csduck.pyduck.auth.schemas import (
     UserCreate,
     UserRead,
     UserReadForSession,
     UserAvatarCreate,
     UserAvatarRead,
+    UserVerificationEmailCreate,
+    UserVerificationEmailRead,
 )
 
 
@@ -58,3 +60,40 @@ def create_user_avatar(*, avatar_in: UserAvatarCreate) -> UserAvatarRead:
     db.session.commit()
 
     return UserAvatarRead.from_orm(avatar)
+
+
+def create_user_verification_email(
+    *, verification_in: UserVerificationEmailCreate
+) -> UserVerificationEmailRead:
+    """Insert user verification email in table."""
+
+    verification = UserVerificationEmail(**verification_in.dict())
+
+    db.session.add(verification)
+    db.session.commit()
+
+    return UserVerificationEmailRead.from_orm(verification)
+
+
+def get_user_verification_email(*, user_id: int) -> UserVerificationEmailRead | None:
+    """Select user verification email."""
+
+    verification = db.session.scalars(
+        select(UserVerificationEmail).filter_by(user_id=user_id)
+    ).one_or_none()
+
+    return (
+        UserVerificationEmailRead.from_orm(verification)
+        if verification is not None
+        else None
+    )
+
+
+def verify_user(*, user_id: int) -> UserRead:
+    """Change user's verified to true(verified)."""
+
+    user = _get_user(id=user_id)
+    user.verified = True
+    db.session.commit()
+
+    return UserRead.from_orm(user)

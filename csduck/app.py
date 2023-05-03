@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from http import HTTPStatus
 from flask_login import LoginManager
 from sqlalchemy import MetaData
+
 login_manager = LoginManager()
 
 
@@ -73,7 +74,6 @@ def create_app(mode: str = "dev"):
     # Database.
     db.init_app(app)
     migrate.init_app(app, db)
-    
 
     # Bcrypt.
     from flask_bcrypt import Bcrypt
@@ -97,11 +97,11 @@ def create_app(mode: str = "dev"):
     # Customize the login process.
     @login_manager.unauthorized_handler
     def unauthorized():
-
         # TODO: This is not safe.
         next_ = request.referrer if request.referrer else None
 
         res = make_response()
+        res.headers["HX-Reswap"] = "none"
         res.headers["HX-Trigger"] = "login-required"
         return res
 

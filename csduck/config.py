@@ -23,6 +23,12 @@ class WebConfig(BaseSettings):
     # `next` if `USE_SESSION_FOR_NEXT` is set.
     USE_SESSION_FOR_NEXT: bool = True
 
+    # Google G-mail SMTP configuration.
+    GMAIL_SMTP_HOST: str = "smtp.gmail.com"
+    GMAIL_SMTP_PORT: int = 587
+    GMAIL_SMTP_LOGIN_USERNAME: str
+    GMAIL_SMTP_LOGIN_PASSWORD: str
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

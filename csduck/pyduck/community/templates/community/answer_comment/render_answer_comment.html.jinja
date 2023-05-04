@@ -64,8 +64,8 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="comment_id" value="{{ comment.id }}">
             <textarea name="content" data-pd-comment-editor="{{ comment.id }}">
-                        {{ comment.content }}
-                    </textarea>
+                {{ comment.content }}
+            </textarea>
             <div class="pt-2 text-end">
                 <button
                         class="btn btn-secondary rounded-0"

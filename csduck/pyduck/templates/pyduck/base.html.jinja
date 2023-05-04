@@ -1,5 +1,6 @@
 {% from "pyduck/data/sidebar.html.jinja" import sidebar_community %}
 {% from "pyduck/data/sidebar.html.jinja" import sidebar_learning %}
+{% from "pyduck/data/sidebar.html.jinja" import sidebar_sotsog %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -58,7 +59,7 @@
             height: 300px;
             overflow-y: auto;
         }
-        
+
         .answer .ck.ck-content:not(.ck-comment__input *) {
             height: 150px;
             overflow-y: auto;
@@ -80,7 +81,7 @@
             -webkit-text-fill-color: transparent;
         }
     </style>
-    
+
     {% block css %}
     <style>
         .nav-item:hover {
@@ -89,6 +90,10 @@
 
         .nav-item__learning:hover {
             background-color: var(--bs-info-bg-subtle);
+        }
+
+        .nav-item__sotsog:hover {
+            background-color: var(--bs-success-bg-subtle);
         }
     </style>
     {% endblock css %}
@@ -199,6 +204,26 @@
                         </ul>
                     </div>
                 </div>
+                <div class="pt-5">
+                    <button class="btn btn-outline-success border-0 w-100 rounded-0" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#sotsog" aria-expanded="false" aria-controls="collapseExample">
+                        <div class="fw-bold fs-5">거인의 어깨너머</div>
+                    </button>
+                    <div class="collapse show pt-1" id="sotsog">
+                        <ul class="nav flex-column nav-pills nav-fill">
+                            {% for item in sidebar_sotsog %}
+                            <li class="nav-item nav-item__sotsog text-start">
+                                <a class="nav-link link-body-emphasis d-flex" aria-current="page"
+                                   href="{{ url_for('pyduck.community.index', category=item.code) }}">
+                                    <div class="ms-3" style="width: 30px;">{{ item.emoji }}</div>
+                                    <div class="ps-3">{{ item.name }}</div>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </div>
             <!-- sidebar [END] -->
             <div class="flex-grow-1">
@@ -214,9 +239,11 @@
                     &copy; 2023- pyduck. All rights reserved.
                 </div>
                 <div>
-                    <button class="btn btn-outline-secondary border-0 px-2 py-1">
+                    <a class="btn btn-outline-secondary border-0 px-2 py-1"
+                       href="https://github.com/kssflow/csduck"
+                       target="_blank">
                         <span class="fs-4"><i class="bi bi-github"></i></span>
-                    </button>
+                    </a>
                 </div>
             </div>
         </footer>

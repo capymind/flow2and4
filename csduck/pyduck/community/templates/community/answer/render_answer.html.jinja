@@ -4,18 +4,28 @@
 <div
      x-data="{
         editmode: false,
-        commentmode: false
+        commentmode: false,
+        answered: false,
+        showcomments: false,
     }"
      data-pd-answer="{{ answer.id }}"
-     @comment-created="commentmode=false">
+     @comment-created="commentmode=false"
+     @question-answered="answered=true">
     <div class="row mt-3">
         <div class="col-8">
-            <div class="p-3 border rounded-2"
+            <div
+                 class="
+                    px-3 pt-3 pb-2 border rounded-2
+                    {{ answer.answered and 'border-success-subtle border-2' }}
+                 "
                  x-show="!editmode">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <img class="rounded-circle" src="{{ answer.user.avatar.url }}" width="33" height="33">
                         <span>{{ answer.user.nickname }}</span>
+                        {% if answer.answered %}
+                        <small class="border rounded-pill bg-success-subtle px-3 py-1">채택된 답변</small>
+                        {% endif %}
                     </div>
                     <div class="d-flex gap-2">
                         {% if answer.history|length %}
@@ -52,44 +62,76 @@
                         </div>
                     </div>
                 </div>
-                <div class="pt-4">
+                <div class="pt-2">
                     {{ answer.content }}
                 </div>
-                <div class="pt-4 d-flex justify-content-between">
+                <div class="pt-2 d-flex justify-content-between">
                     <div class="d-flex gap-2">
                         {{ render_vote(answer=answer) }}
                         {{ render_reaction(answer=answer) }}
                     </div>
-                    {% if answer.comment_count %}
-                    <div>
-                        <button
-                                class="btn btn-sm btn-outline-secondary border-0"
-                                @click="commentmode=true;
-                                $nextTick(() => {
-                                    $dispatch(
-                                        'require-editor', { target: 'comment', id: '{{ answer.id }}'}
-                                    )
-                                })">
-                            <span class="fst-italic text-underline"><u>댓글 {{ answer.comment_count }}개 보기</u></span>
+                </div>
+                <div class="d-flex pt-2 gap-2 justify-content-between align-items-center">
+                    {% if current_user.id is eq answer.question.user_id %}
+                    {% if answer.answered %}
+                    <form
+                          hx-put="{{ url_for('pyduck.community.unanswered', answer_id=answer.id) }}"
+                          hx-swap="outerHTML"
+                          hx-target="[data-pd-answer='{{ answer.id }}']">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-success rounded-pill">
+                            답변 채택 취소하기
                         </button>
-                    </div>
+                    </form>
+                    {% else %}
+                    <form
+                          hx-put="{{ url_for('pyduck.community.answered', answer_id=answer.id) }}"
+                          hx-swap="outerHTML"
+                          hx-target="[data-pd-answer='{{ answer.id }}']">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-outline-success rounded-pill">
+                            답변 채택 하기
+                        </button>
+                    </form>
                     {% endif %}
+                    {% endif %}
+                    <div class="d-flex">
+                        {% if answer.comment_count %}
+                        <div>
+                            <button
+                                    @click="showcomments=!showcomments"
+                                    class="btn btn-sm btn-outline-secondary border-0"
+                                    hx-get="{{ url_for('pyduck.community.comments', answer_id=answer.id) }}"
+                                    hx-trigger="click once"
+                                    hx-target="[data-pd-comments='{{ answer.id }}']">
+                                <span class="fst-italic text-underline">
+                                    <u x-text="
+                                    !showcomments 
+                                    ? '댓글 {{ answer.comment_count }}개 보기'
+                                    : '댓글 접기'"></u>
+                                </span>
+                            </button>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <button
+                                    class="btn btn-sm btn-outline-secondary border-0"
+                                    x-show="!commentmode"
+                                    @click="commentmode=true;
+                                            $nextTick(() => {
+                                                $dispatch(
+                                                    'require-editor', { target: 'comment', id: '{{ answer.id }}'}
+                                                )
+                                            })">
+                                <span class="fst-italic text-underline"><u>댓글 달기</u></span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <button
-                            class="btn btn-sm btn-outline-secondary border-0"
-                            x-show="!commentmode"
-                            @click="commentmode=true;
-                                $nextTick(() => {
-                                    $dispatch(
-                                        'require-editor', { target: 'comment', id: '{{ answer.id }}'}
-                                    )
-                                })">
-                        <span class="fst-italic text-underline"><u>댓글 달기</u></span>
-                    </button>
-                </div>
-                <div class="comments mt-2 bg-body-secondary rounded-2" data-pd-comments="{{ answer.id }}">
-
+                <div
+                     class="comments mt-2 bg-body-secondary rounded-2"
+                     data-pd-comments="{{ answer.id }}"
+                     x-show="showcomments">
                 </div>
                 <template x-if="commentmode">
                     <div class="py-4 px-3 rounded-2 bg-body-tertiary mt-2">

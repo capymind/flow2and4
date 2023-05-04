@@ -1,0 +1,13 @@
+{% from "community/answer/render_answer.html.jinja" import render_answer with context %}
+
+
+{% for answer in answers %}
+{{ render_answer(answer) }}
+{% if loop.last and answers.has_next %}
+<div
+     hx-get="{{ url_for('pyduck.community.answers', question=q.id, page=answer.next_num) }}"
+     hx-trigger="revelead"
+     hx-swap="afterend">
+</div>
+{% endif %}
+{% endfor %}

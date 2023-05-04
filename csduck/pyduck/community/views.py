@@ -65,6 +65,9 @@ from csduck.pyduck.community.service import (
     delete_answer_comment_reaction,
     create_answer_comment_reaction,
     update_answer_comment_adding_history,
+    mark_answer_as_answered,
+    mark_answer_as_unanswered,
+    get_all_answer_comments_by_commons,
 )
 from csduck.pyduck.schemas import CommonParameters
 from csduck.database import db
@@ -87,13 +90,24 @@ def index(category: str):
     if category == "help":
         commons = CommonParameters(**request.args.to_dict(flat=False))
 
-        question_pagination = get_all_questions_by_commons(**commons.dict())
+        qp = get_all_questions_by_commons(**commons.dict())
 
-        return render_template(
-            "community/index_help.html.jinja", question_pagination=question_pagination
-        )
+        return render_template("community/index_help.html.jinja", qp=qp)
 
     return render_template("community/index.html.jinja")
+
+
+@bp.route("/questions", methods=[HTTPMethod.GET])
+def questions():
+    """
+    (GET) Show questions fragment.
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+    qp = get_all_questions_by_commons(**commons.dict())
+    print(qp.total, qp.items)
+
+    return render_template("community/question/questions.html.jinja", qp=qp)
 
 
 @bp.route(
@@ -111,7 +125,6 @@ def question(question_id: int):
 
     commons = CommonParameters(**request.args.to_dict(flat=False))
     ap = get_all_answers_by_commons(**commons.dict(), question_id=question_id)
-    print(ap.total)
 
     return render_template("community/question/question.html.jinja", q=q, ap=ap)
 
@@ -456,6 +469,18 @@ def answer_reaction(answer_id: int):
         return render_template("community/answer/reaction.html.jinja", answer=answer)
 
 
+@bp.route("/answers/<int:answer_id>/comments", methods=[HTTPMethod.GET])
+def comments(answer_id: int):
+    """
+    (GET) Show comments to specific answer.
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+    cp = get_all_answer_comments_by_commons(**commons.dict(), answer_id=answer_id)
+
+    return render_template("community/answer_comment/answer_comments.html.jinja", cp=cp)
+
+
 @bp.route("/comments", methods=[HTTPMethod.POST, HTTPMethod.PUT])
 @login_required
 def comment_to_answer():
@@ -567,3 +592,58 @@ def answer_comment_reaction(comment_id: int):
         return render_template(
             "community/answer_comment/reaction.html.jinja", comment=comment
         )
+
+
+@bp.route("/questions/<int:question_id>/answers", methods=[HTTPMethod.GET])
+def answers(question_id: int):
+    """
+    (GET) Show answers fragment.
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+
+    answers = get_all_answers_by_commons(**commons.dict(), question_id=question_id)
+
+    return render_template("community/answer/answers.html.jinja", answers=answers)
+
+
+@bp.route("/answers/<int:answer_id>/answered", methods=[HTTPMethod.PUT])
+def answered(answer_id: int):
+    """
+    (PUT) mark specific answer as answered and return relevant fragment.
+    """
+
+    answer = get_answer(answer_id=answer_id)
+
+    if answer is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    answer = mark_answer_as_answered(answer_id=answer.id)
+
+    res = make_response(
+        render_template("community/answer/answer.html.jinja", answer=answer)
+    )
+    res.headers["HX-Trigger"] = "question-answered"
+
+    return res
+
+
+@bp.route("/answers/<int:answer_id>/unanswered", methods=[HTTPMethod.PUT])
+def unanswered(answer_id: int):
+    """
+    (PUT) mark specific answer as unanswered and return relevant fragment.
+    """
+
+    answer = get_answer(answer_id=answer_id)
+
+    if answer is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    answer = mark_answer_as_unanswered(answer_id=answer.id)
+
+    res = make_response(
+        render_template("community/answer/answer.html.jinja", answer=answer)
+    )
+    res.headers["HX-Trigger"] = "question-answered"
+
+    return res

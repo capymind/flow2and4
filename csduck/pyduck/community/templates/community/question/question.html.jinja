@@ -17,8 +17,10 @@
                     {{ q.title }} <span class="text-secondary">#{{ q.id }}</span>
                 </div>
                 <div class="pt-2">
-                    {% if not q.answered %}
-                    <small class="border rounded-pill px-3 py-1">답변없음</small>
+                    {% if q.answered %}
+                    <small class="border rounded-pill text-bg-success px-3 py-1">채택된 답변 있음</small>
+                    {% else %}
+                    <small class="border rounded-pill px-3 py-1">채택된 답변 없음</small>
                     {% endif %}
                     <small>
                         <span class="fw-bold">{{ q.user.nickname }}</span>님께서
@@ -86,6 +88,15 @@
 <div class="container px-5 pt-2 answers">
     {% for answer in ap %}
     {{ render_answer(answer) }}
+    <!-- [start] infinite scroll trigger -->
+    {% if loop.last and ap.has_next %}
+    <div
+         hx-get="{{ url_for('pyduck.community.answers', question_id=q.id, page=ap.next_num) }}"
+         hx-trigger="revealed"
+         hx-swap="afterend">
+    </div>
+    {% endif %}
+    <!-- infinite scroll trigger [end] -->
     {% endfor %}
 </div>
 <div class="container px-5 pb-5">
@@ -132,7 +143,7 @@
         let _selector;
         if (e.detail.target === 'answer') {
             _selector = `[data-pd-editor-id='${e.detail.id}']`
-        } else if(e.detail.target === 'comment') {
+        } else if (e.detail.target === 'comment') {
             _selector = `[data-pd-comment-editor='${e.detail.id}']`
         } else {
             _selector = '#editor'

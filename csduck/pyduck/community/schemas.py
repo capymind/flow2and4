@@ -216,6 +216,7 @@ class AnswerRead(AnswerBase):
     # relationship.
     user: UserRead
     history: list[AnswerHistoryRead | None]
+    question: QuestionRead
     votes: list[AnswerVoteRead | None]
     reactions: list[AnswerReactionRead | None]
 

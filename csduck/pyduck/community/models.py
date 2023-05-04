@@ -173,6 +173,7 @@ class Answer(db.Model):
     # relationship.
     user: Mapped[User] = relationship("pyduck.auth.models.User")
     history: Mapped[list[AnswerHistory]] = relationship()
+    question: Mapped[Question] = relationship()
     votes: Mapped[list[AnswerVote]] = relationship()
     reactions: Mapped[list[AnswerReaction]] = relationship()
 

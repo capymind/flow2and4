@@ -386,7 +386,7 @@ def get_all_answers_by_commons(
         column = getattr(model, field)
         _sorters.append(column.asc() if direction == "asc" else column.desc())
 
-    _sorters.append(model.created_at.desc())  # default sorting.
+    _sorters.append(model.created_at.asc())  # default sorting.
     select_ = select_.order_by(*_sorters)
 
     # handle paginating and return.
@@ -498,3 +498,71 @@ def update_answer_comment_adding_history(
     db.session.commit()
 
     return AnswerCommentRead.from_orm(comment)
+
+
+def mark_answer_as_answered(*, answer_id: int):
+    """Update answer's answered as True and return relevant orm."""
+
+    answer = _get_answer(answer_id)
+    answer.answered = True
+
+    question = _get_question(answer.question_id)
+    question.answered = True
+
+    db.session.commit()
+
+    return AnswerRead.from_orm(answer)
+
+
+def mark_answer_as_unanswered(*, answer_id: int):
+    """Update answer's answered as False and return relevant orm."""
+
+    answer = _get_answer(answer_id)
+    answer.answered = False
+
+    question = _get_question(answer.question_id)
+    question.answered = False
+
+    db.session.commit()
+
+    return AnswerRead.from_orm(answer)
+
+
+def get_all_answer_comments_by_commons(
+    *, page, per_page, max_per_page, filters, sorters, query: str, answer_id: int
+) -> Pagination:
+    """Select all answer comments in specific answer by common parameters.
+
+    TODO
+    : very limited form and functionality of search-filter-sorter...
+    """
+    model = AnswerComment
+    select_ = select(model).filter_by(answer_id=answer_id)
+
+    # handle searching.
+    if query is not None:
+        field, _, value = query.split("-", maxsplit=2)
+        where_ = getattr(model, field).contains(value)
+        select_ = select_.where(where_)
+
+    # handle filtering.
+    _filters = []
+    for filter_ in filters:
+        field, f, value = filter_.split("-")
+        column = getattr(model, field)
+        if f == "eq":
+            _filters.append(column == value)
+    select_ = select_.where(*_filters)
+
+    # handle sorting.
+    _sorters = []
+    for sorter in sorters:
+        field, direction = sorter.split("-")
+        column = getattr(model, field)
+        _sorters.append(column.asc() if direction == "asc" else column.desc())
+
+    _sorters.append(model.created_at.asc())  # default sorting.
+    select_ = select_.order_by(*_sorters)
+
+    # handle paginating and return.
+    return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)

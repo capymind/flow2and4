@@ -18,14 +18,15 @@
             {% if current_user.is_authenticated %}
             <a class="btn btn-primary rounded-0" href="{{ url_for('pyduck.community.question_new') }}">질문하기</a>
             {% else %}
-            <a class="btn btn-primary rounded-0" hx-get="{{ url_for('pyduck.community.question_new') }}" hx-swap="none">질문하기</a>
+            <a class="btn btn-primary rounded-0" hx-get="{{ url_for('pyduck.community.question_new') }}"
+               hx-swap="none">질문하기</a>
             {% endif %}
         </div>
     </div>
 </div>
 <div class="container">
     <div class="p-3 bg-body-tertiary rounded-2 mt-3">
-        {% for q in question_pagination %}
+        {% for q in qp %}
         <div class="row py-3 border-bottom">
             <div class="col d-flex justify-content-between">
                 <div class="d-flex align-items-center">
@@ -35,7 +36,8 @@
                     </div>
                     <div class="ps-1 ps-lg-3">
                         <div class="fw-bold fs-5">
-                            <a class="link link-body-emphasis" href="{{ url_for('pyduck.community.question', question_id=q.id) }}">
+                            <a class="link link-body-emphasis"
+                               href="{{ url_for('pyduck.community.question', question_id=q.id) }}">
                                 {{ q.title }}
                             </a>
                         </div>
@@ -63,6 +65,15 @@
                 </div>
             </div>
         </div>
+        <!-- [start] infinite scroll -->
+        {% if loop.last and qp.has_next %}
+        <div
+             hx-get="{{ url_for('pyduck.community.questions', page=qp.next_num) }}"
+             hx-trigger="revealed"
+             hx-swapp="afterend">
+        </div>
+        {% endif %}
+        <!-- infinite scroll [end] -->
         {% endfor %}
     </div>
 </div>

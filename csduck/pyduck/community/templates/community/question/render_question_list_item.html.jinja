@@ -1,0 +1,49 @@
+{% macro render_question_list_item(question) %} <div class="row py-3 border-bottom">
+    <div class="col d-flex flex-column flex-md-row justify-content-between">
+        <div class="d-flex align-items-center">
+            <div
+                 class="d-none d-md-flex bg-body-secondary rounded-1 justify-content-center align-items-center"
+                 style="width: 48px; height: 48px;">
+                <span class="fs-5">{{ c.emoji }}</span>
+            </div>
+            <div class="ps-1 ps-lg-3">
+                <div class="fw-bold fs-5">
+                    <a
+                       class="link link-body-emphasis"
+                       href="{{ url_for('pyduck.community.question', question_id=question.id) }}">
+                        {{ question.title }}
+                    </a>
+                </div>
+                <div>
+                    <small> {{ question.user.nickname }}님이
+                        <pd-relative-time datetime="{{ question.created_at }}"></pd-relative-time> {{ c.name }} 관련 작성
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2
+                    justify-content-end pt-1
+                    justify-content-md-start pt-md-0">
+            <div
+                 class="d-flex d-md-none bg-body-secondary rounded-1 justify-content-center align-items-center"
+                 style="width: 35px; height: 35px;">
+                <span>{{ c.emoji }}</span>
+            </div>
+            <div class="pe-3">
+                <img
+                     src="{{ question.user.avatar.url }}"
+                     width="30px"
+                     height="30px"
+                     class="rounded-circle">
+            </div>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-arrow-up"></i>
+                <span class="ps-1 pe-2">{{ question.vote_count }}</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-chat"></i>
+                <span class="ps-1 pe-2">{{ question.comment_count }}</span>
+            </div>
+        </div>
+    </div>
+</div> {% endmacro %}

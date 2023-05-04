@@ -1,0 +1,60 @@
+<div class="pt-5">
+    <button class="btn btn-outline-primary border-0 w-100 rounded-0" type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+        <div class="fw-bold fs-5">커뮤니티</div>
+    </button>
+    <div class="collapse show pt-1" id="collapseExample">
+        <ul class="nav flex-column nav-pills nav-fill">
+            {% for item in sidebar_community %}
+            <li class="nav-item text-start">
+                <a class="nav-link link-body-emphasis d-flex" aria-current="page"
+                   href="{{ url_for('pyduck.community.index', category=item.code) }}">
+                    <div class="ms-3" style="width: 30px;">{{ item.emoji }}</div>
+                    <div class="ps-3">{{ item.name }}</div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<div class="pt-5">
+    <button class="btn btn-outline-info border-0 w-100 rounded-0" type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#learning" aria-expanded="false" aria-controls="collapseExample">
+        <div class="fw-bold fs-5">같이 배우기</div>
+    </button>
+    <div class="collapse show pt-1" id="learning">
+        <ul class="nav flex-column nav-pills nav-fill">
+            {% for item in sidebar_learning %}
+            <li class="nav-item nav-item__learning text-start">
+                <a class="nav-link link-body-emphasis d-flex" aria-current="page"
+                   href="{{ url_for('pyduck.community.index', category=item.code) }}">
+                    <div class="ms-3" style="width: 30px;">{{ item.emoji }}</div>
+                    <div class="ps-3">{{ item.name }}</div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<div class="pt-5">
+    <button class="btn btn-outline-success border-0 w-100 rounded-0" type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#sotsog" aria-expanded="false" aria-controls="collapseExample">
+        <div class="fw-bold fs-5">거인의 어깨너머</div>
+    </button>
+    <div class="collapse show pt-1" id="sotsog">
+        <ul class="nav flex-column nav-pills nav-fill">
+            {% for item in sidebar_sotsog %}
+            <li class="nav-item nav-item__sotsog text-start">
+                <a class="nav-link link-body-emphasis d-flex" aria-current="page"
+                   href="{{ url_for('pyduck.community.index', category=item.code) }}">
+                    <div class="ms-3" style="width: 30px;">{{ item.emoji }}</div>
+                    <div class="ps-3">{{ item.name }}</div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

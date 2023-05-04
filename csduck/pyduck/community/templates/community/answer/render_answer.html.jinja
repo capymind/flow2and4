@@ -12,7 +12,7 @@
      @comment-created="commentmode=false"
      @question-answered="answered=true">
     <div class="row mt-3">
-        <div class="col-8">
+        <div class="col-12 col-lg-8">
             <div
                  class="
                     px-3 pt-3 pb-2 border rounded-2
@@ -142,12 +142,10 @@
                               hx-target="[data-pd-comments='{{ answer.id }}']">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="answer_id" value="{{ answer.id }}">
-                            <textarea name="content" data-pd-comment-editor="{{ answer.id }}">
-                            </textarea>
+                            <textarea name="content" data-pd-comment-editor="{{ answer.id }}"></textarea>
                             <div class="pt-2 text-end">
-                                <button
+                                <button type="button"
                                         class="btn btn-secondary rounded-0"
-                                        type="button"
                                         @click="commentmode=false">
                                     취소하기
                                 </button>

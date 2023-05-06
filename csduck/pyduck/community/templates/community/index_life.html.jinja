@@ -1,7 +1,7 @@
 {% extends "pyduck/base.html.jinja" %}
 
 {% block main %}
-{% set c = sidebar_community | selectattr("code", "eq", "help") | list | first %}
+{% set c = sidebar_community | selectattr("code", "eq", "life") | list | first %}
 {% set q = request.args.get("query") %}
 {% set f = request.args.get("filters") %}
 {% set s = request.args.get("sorters") %}

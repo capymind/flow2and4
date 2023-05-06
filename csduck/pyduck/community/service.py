@@ -46,7 +46,9 @@ from csduck.pyduck.community.models import (
     AnswerCommentHistory,
     AnswerCommentReaction,
 )
-from sqlalchemy import select
+from csduck.pyduck.auth.models import User
+from sqlalchemy import select, or_
+from sqlalchemy.orm import with_parent
 from flask_sqlalchemy.pagination import Pagination
 
 
@@ -112,22 +114,36 @@ def get_all_questions_by_commons(
     """Select all posts by common parameters.
 
     TODO
+    : non maintainable, not flexible...
     : very limited form and functionality of search-filter-sorter...
     """
-    model = Question
-    select_ = select(model)
+    select_ = select(Question)
 
     # handle searching.
     if query is not None:
         field, _, value = query.split("-", maxsplit=2)
-        where_ = getattr(model, field).contains(value)
+
+        where_ = None
+        if field == "all":
+            where_ = or_(
+                Question.title.contains(value),
+                Question.content.contains(value),
+                Question.user.has(User.nickname.contains(value)),
+            )
+        elif field == "author":
+            where_ = Question.user.has(User.nickname.contains(value))
+        else:
+            where_ = getattr(Question, field).contains(value)
         select_ = select_.where(where_)
 
     # handle filtering.
     _filters = []
     for filter_ in filters:
         field, f, value = filter_.split("-")
-        column = getattr(model, field)
+        column = getattr(Question, field)
+        # boolean.
+        if field == "answered":
+            value = True if value.lower() == "true" else False
         if f == "eq":
             _filters.append(column == value)
     select_ = select_.where(*_filters)
@@ -136,10 +152,10 @@ def get_all_questions_by_commons(
     _sorters = []
     for sorter in sorters:
         field, direction = sorter.split("-")
-        column = getattr(model, field)
+        column = getattr(Question, field)
         _sorters.append(column.asc() if direction == "asc" else column.desc())
 
-    _sorters.append(model.created_at.desc())  # default sorting.
+    _sorters.append(Question.created_at.desc())  # default sorting.
     select_ = select_.order_by(*_sorters)
 
     # handle paginating and return.

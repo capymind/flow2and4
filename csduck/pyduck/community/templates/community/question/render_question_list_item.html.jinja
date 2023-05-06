@@ -18,6 +18,9 @@
                     <small> {{ question.user.nickname }}님이
                         <pd-relative-time datetime="{{ question.created_at }}"></pd-relative-time> {{ c.name }} 관련 작성
                     </small>
+                    <small class="{{ 'text-success' if question.answered }}">
+                        · {{ '해결됨' if question.answered else '미해결' }}
+                    </small>
                 </div>
             </div>
         </div>

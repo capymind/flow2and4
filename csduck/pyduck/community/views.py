@@ -87,12 +87,15 @@ bp = Blueprint(
 def index(category: str):
     """Show community page by category."""
 
+    commons = CommonParameters(**request.args.to_dict(flat=False))
     if category == "help":
-        commons = CommonParameters(**request.args.to_dict(flat=False))
-
         qp = get_all_questions_by_commons(**commons.dict())
 
         return render_template("community/index_help.html.jinja", qp=qp)
+    
+    if category == "life":
+        return render_template("community/index_life.html.jinja")
+        
 
     return render_template("community/index.html.jinja")
 
@@ -148,6 +151,7 @@ def question_edit(question_id: int):
 
     if request.method == HTTPMethod.POST:
         tags_dict = request.form.get("tags")
+        tags_in = []
         if tags_dict:
             tags_in = [tag.get("value") for tag in json.loads(tags_dict)]
             tags_in = get_or_create_tags(tags_in=tags_in)
@@ -270,6 +274,7 @@ def question_new():
 
     if request.method == HTTPMethod.POST:
         tags_dict = request.form.get("tags")
+        tags_in = []
         if tags_dict:
             tags_in = [tag.get("value") for tag in json.loads(tags_dict)]
             tags_in = get_or_create_tags(tags_in=tags_in)
@@ -301,7 +306,6 @@ def post(category: str):
 
     return render_template("community/post/new.html.jinja")
 
-
 @bp.route("/<category>/upload/images", methods=[HTTPMethod.POST])
 @login_required
 def image_upload(category: str):
@@ -319,7 +323,7 @@ def image_upload(category: str):
         return {"error": {"message": "지원하는 이미지 파일형식이 아닙니다."}}
 
     filename = uuid.uuid4().hex + "." + format_
-    folder = "pyduck/community/static/upload/images"
+    folder = "csduck/pyduck/community/static/upload/images"
 
     file.save(os.path.join(folder, filename))
     filesize = os.stat(os.path.join(folder, filename)).st_size

@@ -75,6 +75,16 @@ def create_app(mode: str = "dev"):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # Database____sqlite specific foreign key enabled.
+    def _fk_pragma_on_connect(dbapi_con, con_record):  # noqa
+        dbapi_con.execute("PRAGMA foreign_keys=ON")
+
+    with app.app_context():
+        from sqlalchemy import event
+
+        for _engine in db.engines.values():
+            event.listen(_engine, "connect", _fk_pragma_on_connect)
+
     # Bcrypt.
     from flask_bcrypt import Bcrypt
 

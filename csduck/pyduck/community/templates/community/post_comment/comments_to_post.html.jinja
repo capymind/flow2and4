@@ -1,0 +1,13 @@
+{% from "community/post_comment/render_post_comment.html.jinja" import render_post_comment with context %}
+
+
+{% for comment in pagination %}
+{{ render_post_comment(comment) }}
+{% if loop.last and pagination.has_next %}
+<div
+     hx-get="{{ url_for('pyduck.community.comments_to_post', post_id=comment.post_id, page=pagination.next_num) }}"
+     hx-trigger="revelead"
+     hx-swap="afterend">
+</div>
+{% endif %}
+{% endfor %}

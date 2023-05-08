@@ -28,28 +28,7 @@ class CommonParameters(BaseModel):
     page: conint(gt=0, lt=2147483647) = 1
     per_page: conint(gt=0, lt=50) = 10
     max_per_page: conint(gt=0, lt=100) = 100
-    filters: list[str | None] = []
-    sorters: list[str | None] = []
+    filters: str | None
+    sorters: str | None
+    periods: str | None
     query: str | None
-
-    @validator("page", "per_page", "max_per_page", pre=True)
-    def check_only_one(cls, v):
-        """Check whether list's length is one to return only that value"""
-        if isinstance(v, list):
-            if len(v) == 1:
-                return int(v[0])
-            else:
-                raise ValidationError("more than one items in list prohibited")
-
-        return v
-
-    @validator("query", pre=True)
-    def check_only_one_str(cls, v):
-        """Check whether list's length is one to return only that value"""
-        if isinstance(v, list):
-            if len(v) == 1:
-                return v[0]
-            else:
-                raise ValidationError("more than one items in list prohibited")
-
-        return v

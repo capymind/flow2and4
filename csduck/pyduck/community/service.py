@@ -30,6 +30,24 @@ from csduck.pyduck.community.schemas import (
     AnswerCommentHistoryCreate,
     AnswerCommentReactionCreate,
     AnswerCommentReactionRead,
+    PostCreate,
+    PostRead,
+    PostReactionCreate,
+    PostReactionRead,
+    PostVoteCreate,
+    PostVoteRead,
+    PostCommentCreate,
+    PostCommentRead,
+    PostCommentReactionCreate,
+    PostCommentReactionRead,
+    PostCommentVoteCreate,
+    PostCommentVoteRead,
+    PostCommentHistoryCreate,
+    PostTagCreate,
+    PostTagRead,
+    PostUpdate,
+    PostHistoryCreate,
+    PostCommentUpdate,
 )
 from csduck.pyduck.community.models import (
     QuestionImageUpload,
@@ -45,11 +63,22 @@ from csduck.pyduck.community.models import (
     AnswerComment,
     AnswerCommentHistory,
     AnswerCommentReaction,
+    Post,
+    PostComment,
+    PostReaction,
+    PostVote,
+    PostHistory,
+    PostCommentReaction,
+    PostCommentVote,
+    PostCommentHistory,
+    PostImageUpload,
+    PostTag,
 )
 from csduck.pyduck.auth.models import User
 from sqlalchemy import select, or_
 from sqlalchemy.orm import with_parent
 from flask_sqlalchemy.pagination import Pagination
+from csduck.pyduck.community.helpers import date_filters
 
 
 def create_question_image_upload(
@@ -84,7 +113,7 @@ def _get_tag_by_name(name: str) -> QuestionTag | None:
     return db.session.scalars(select(QuestionTag).filter_by(name=name)).one_or_none()
 
 
-def _create_tag_by_name(name: str) -> QuestionTagRead:
+def _create_tag_by_name(name: str) -> QuestionTag:
     """Create tag by name."""
 
     tag = QuestionTag(name=name)
@@ -109,9 +138,9 @@ def get_or_create_tags(*, tags_in: list[str]) -> list[QuestionTagRead]:
 
 
 def get_all_questions_by_commons(
-    *, page, per_page, max_per_page, filters, sorters, query: str
+    *, page, per_page, max_per_page, filters, sorters, periods, query
 ) -> Pagination:
-    """Select all posts by common parameters.
+    """Select all questions by common parameters.
 
     TODO
     : non maintainable, not flexible...
@@ -137,18 +166,33 @@ def get_all_questions_by_commons(
         select_ = select_.where(where_)
 
     # handle filtering.
+    filters = [] if filters is None else filters.split()
+    periods = [] if periods is None else periods.split()
+
+    filters = filters + periods
+
     _filters = []
     for filter_ in filters:
-        field, f, value = filter_.split("-")
+        field, f, value = filter_.split("-", 2)
         column = getattr(Question, field)
-        # boolean.
+
+        # Field customizations
         if field == "answered":
             value = True if value.lower() == "true" else False
+        if field == "created_at":
+            value = list(df["value"] for df in date_filters if df["code"] == filter_)[0]
+
+        # Operators
         if f == "eq":
             _filters.append(column == value)
+        if f == "ge":
+            _filters.append(column >= value)
+
     select_ = select_.where(*_filters)
 
     # handle sorting.
+    sorters = [] if sorters is None else sorters.split()
+
     _sorters = []
     for sorter in sorters:
         field, direction = sorter.split("-")
@@ -156,6 +200,65 @@ def get_all_questions_by_commons(
         _sorters.append(column.asc() if direction == "asc" else column.desc())
 
     _sorters.append(Question.created_at.desc())  # default sorting.
+    select_ = select_.order_by(*_sorters)
+
+    # handle paginating and return.
+    return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)
+
+
+def get_all_comments_to_post_comment_by_commons(
+    *,
+    page,
+    per_page,
+    max_per_page,
+    filters,
+    sorters,
+    periods,
+    query,
+    post_comment_id: int
+) -> Pagination:
+    """Select all comments to post's comment by common parameters.
+
+    TODO
+    : non maintainable, not flexible...
+    : very limited form and functionality of search-filter-sorter...
+    """
+
+    select_ = select(PostComment).filter_by(parent_id=post_comment_id)
+
+    # handle filtering.
+    filters = [] if filters is None else filters.split()
+    periods = [] if periods is None else periods.split()
+
+    filters = filters + periods
+
+    _filters = []
+    for filter_ in filters:
+        field, f, value = filter_.split("-", 2)
+        column = getattr(PostComment, field)
+
+        # Field customizations
+        if field == "created_at":
+            value = list(df["value"] for df in date_filters if df["code"] == filter_)[0]
+
+        # Operators
+        if f == "eq":
+            _filters.append(column == value)
+        if f == "ge":
+            _filters.append(column >= value)
+
+    select_ = select_.where(*_filters)
+
+    # handle sorting.
+    sorters = [] if sorters is None else sorters.split()
+
+    _sorters = []
+    for sorter in sorters:
+        field, direction = sorter.split("-")
+        column = getattr(PostComment, field)
+        _sorters.append(column.asc() if direction == "asc" else column.desc())
+
+    _sorters.append(PostComment.created_at.desc())  # default sorting.
     select_ = select_.order_by(*_sorters)
 
     # handle paginating and return.
@@ -172,6 +275,18 @@ def get_question(*, question_id: int) -> QuestionRead | None:
     question = _get_question(question_id)
 
     return QuestionRead.from_orm(question) if question is not None else None
+
+
+def _get_post(id: int) -> Post | None:
+    return db.session.scalars(select(Post).filter_by(id=id)).one_or_none()
+
+
+def get_post(*, post_id: int) -> PostRead | None:
+    """Select post."""
+
+    post = _get_post(post_id)
+
+    return PostRead.from_orm(post) if post is not None else None
 
 
 def update_question_adding_history(
@@ -201,6 +316,33 @@ def update_question_adding_history(
     return QuestionRead.from_orm(question)
 
 
+def update_post_adding_history(
+    *, post_in: PostUpdate, tags_in: list[PostTag | None]
+) -> PostRead:
+    """Update post, insert post history in table."""
+
+    post = _get_post(post_in.id)
+
+    history_in = PostHistoryCreate(
+        post_id=post.id, title=post.title, content=post.content
+    )
+    history = PostHistory(**history_in.dict())
+
+    updated_data = post_in.dict(include={"title", "content", "updated_at"})
+
+    for column, value in updated_data.items():
+        setattr(post, column, value)
+
+    post.tags.clear()
+    for tag_in in tags_in:
+        post.tags.append(tag_in)
+
+    db.session.add(history)
+    db.session.commit()
+
+    return PostRead.from_orm(post)
+
+
 def create_question_vote(vote_in: QuestionVoteCreate) -> QuestionRead:
     """Insert question vote in table."""
 
@@ -214,11 +356,32 @@ def create_question_vote(vote_in: QuestionVoteCreate) -> QuestionRead:
     return QuestionRead.from_orm(question)
 
 
+def create_post_vote(vote_in: PostVoteCreate) -> PostRead:
+    """Insert post vote in table."""
+
+    post = _get_post(id=vote_in.post_id)
+    post.vote_count += 1
+
+    vote = PostVote(**vote_in.dict())
+    db.session.add(vote)
+    db.session.commit()
+
+    return PostRead.from_orm(post)
+
+
 def get_question_vote(*, question_id: int, user_id: int) -> QuestionVote:
     """Select question vote."""
 
     return db.session.scalars(
         select(QuestionVote).filter_by(question_id=question_id, user_id=user_id)
+    ).one_or_none()
+
+
+def get_post_vote(*, post_id: int, user_id: int) -> PostVote:
+    """Select post vote."""
+
+    return db.session.scalars(
+        select(PostVote).filter_by(post_id=post_id, user_id=user_id)
     ).one_or_none()
 
 
@@ -235,6 +398,19 @@ def delete_question_vote(*, question_id: int, user_id: int) -> QuestionRead:
     return QuestionRead.from_orm(question)
 
 
+def delete_post_vote(*, post_id: int, user_id: int) -> PostRead:
+    """Delete post vote and return relevant question."""
+
+    post = _get_post(post_id)
+    post.vote_count -= 1
+
+    vote = get_post_vote(post_id=post_id, user_id=user_id)
+    db.session.delete(vote)
+    db.session.commit()
+
+    return PostRead.from_orm(post)
+
+
 def create_question_reaction(*, reaction_in: QuestionReactionCreate) -> QuestionRead:
     """Insert question reaction in table and return relevant question."""
 
@@ -247,6 +423,18 @@ def create_question_reaction(*, reaction_in: QuestionReactionCreate) -> Question
     return QuestionRead.from_orm(question)
 
 
+def create_post_reaction(*, reaction_in: PostReactionCreate) -> PostRead:
+    """Insert post reaction in table and return relevant post."""
+
+    post = _get_post(id=reaction_in.post_id)
+
+    reaction = PostReaction(**reaction_in.dict())
+    db.session.add(reaction)
+    db.session.commit()
+
+    return PostRead.from_orm(post)
+
+
 def get_question_reaction(
     *, question_id: int, user_id: int, code: str
 ) -> QuestionReaction | None:
@@ -255,6 +443,26 @@ def get_question_reaction(
     return db.session.scalars(
         select(QuestionReaction).filter_by(
             question_id=question_id, user_id=user_id, code=code
+        )
+    ).one_or_none()
+
+
+def get_post_reaction(*, post_id: int, user_id: int, code: str) -> PostReaction | None:
+    """Select post reaction."""
+
+    return db.session.scalars(
+        select(PostReaction).filter_by(post_id=post_id, user_id=user_id, code=code)
+    ).one_or_none()
+
+
+def get_post_comment_reaction(
+    *, post_comment_id: int, user_id: int, code: str
+) -> PostCommentReaction | None:
+    """Select post comment reaction."""
+
+    return db.session.scalars(
+        select(PostCommentReaction).filter_by(
+            comment_id=post_comment_id, user_id=user_id, code=code
         )
     ).one_or_none()
 
@@ -274,6 +482,30 @@ def delete_question_reaction(
     return QuestionRead.from_orm(question)
 
 
+def delete_post_reaction(*, post_id: int, user_id: int, code: str) -> PostRead:
+    """Delete post reaction and return relevant post."""
+
+    reaction = get_post_reaction(post_id=post_id, user_id=user_id, code=code)
+    db.session.delete(reaction)
+    db.session.commit()
+
+    post = get_post(post_id=post_id)
+    return PostRead.from_orm(post)
+
+
+def delete_comment_reaction(
+    *, comment_id: int, user_id: int, code: str
+) -> PostCommentRead:
+    """Delete post comment reaction and return relevant post comment."""
+
+    reaction = get_comment_reaction(comment_id=comment_id, user_id=user_id, code=code)
+    db.session.delete(reaction)
+    db.session.commit()
+
+    comment = get_comment(comment_id=comment_id)
+    return PostCommentRead.from_orm(comment)
+
+
 def create_answer(*, answer_in: AnswerCreate) -> AnswerRead:
     """Insert answer in table."""
 
@@ -288,8 +520,41 @@ def create_answer(*, answer_in: AnswerCreate) -> AnswerRead:
     return AnswerRead.from_orm(answer)
 
 
+def create_post_comment(*, post_comment_in: PostCommentCreate) -> PostCommentRead:
+    """Insert post comment in table."""
+
+    post_comment = PostComment(**post_comment_in.dict())
+    db.session.add(post_comment)
+
+    post = _get_post(post_comment.post_id)
+    post.comment_count += 1
+
+    db.session.commit()
+
+    return PostCommentRead.from_orm(post_comment)
+
+
+def create_comment_to_post_comment(*, post_comment_in: PostCommentCreate) -> PostCommentRead:
+    """Insert post comment in table. (depth 2)"""
+
+    post_comment = PostComment(**post_comment_in.dict())
+    db.session.add(post_comment)
+
+    parent_post_comment = _get_post_comment(post_comment.parent_id)
+    parent_post_comment.comment_count += 1
+
+    db.session.commit()
+
+    return PostCommentRead.from_orm(post_comment)
+
+
+
 def _get_answer(id: int) -> Answer | None:
     return db.session.scalars(select(Answer).filter_by(id=id)).one_or_none()
+
+
+def _get_post_comment(id: int) -> PostComment | None:
+    return db.session.scalars(select(PostComment).filter_by(id=id)).one_or_none()
 
 
 def get_answer(*, answer_id: int) -> AnswerRead | None:
@@ -298,6 +563,14 @@ def get_answer(*, answer_id: int) -> AnswerRead | None:
     answer = _get_answer(answer_id)
 
     return AnswerRead.from_orm(answer) if answer is not None else None
+
+
+def get_post_comment(*, post_comment_id: int) -> PostCommentRead | None:
+    """Select question."""
+
+    post_comment = _get_post_comment(post_comment_id)
+
+    return PostCommentRead.from_orm(post_comment) if post_comment is not None else None
 
 
 def create_answer_vote(vote_in: AnswerVoteCreate) -> AnswerRead:
@@ -370,7 +643,15 @@ def delete_answer_reaction(*, answer_id: int, user_id: int, code: str) -> Answer
 
 
 def get_all_answers_by_commons(
-    *, page, per_page, max_per_page, filters, sorters, query: str, question_id: int
+    *,
+    page,
+    per_page,
+    max_per_page,
+    filters,
+    sorters,
+    periods,
+    query: str,
+    question_id: int
 ) -> Pagination:
     """Select all answers by common parameters.
 
@@ -387,6 +668,8 @@ def get_all_answers_by_commons(
         select_ = select_.where(where_)
 
     # handle filtering.
+    filters = [] if filters is None else filters.split()
+
     _filters = []
     for filter_ in filters:
         field, f, value = filter_.split("-")
@@ -396,6 +679,52 @@ def get_all_answers_by_commons(
     select_ = select_.where(*_filters)
 
     # handle sorting.
+    sorters = [] if sorters is None else sorters.split()
+
+    _sorters = []
+    for sorter in sorters:
+        field, direction = sorter.split("-")
+        column = getattr(model, field)
+        _sorters.append(column.asc() if direction == "asc" else column.desc())
+
+    _sorters.append(model.created_at.asc())  # default sorting.
+    select_ = select_.order_by(*_sorters)
+
+    # handle paginating and return.
+    return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)
+
+
+def get_all_comments_to_post_by_commons(
+    *, page, per_page, max_per_page, filters, sorters, periods, query, post_id: int
+) -> Pagination:
+    """Select all comments to specific post by common parameters.
+
+    TODO
+    : very limited form and functionality of search-filter-sorter...
+    """
+    model = PostComment
+    select_ = select(model).filter_by(post_id=post_id, parent_id=None)
+
+    # handle searching.
+    if query is not None:
+        field, _, value = query.split("-", maxsplit=2)
+        where_ = getattr(model, field).contains(value)
+        select_ = select_.where(where_)
+
+    # handle filtering.
+    filters = [] if filters is None else filters.split()
+
+    _filters = []
+    for filter_ in filters:
+        field, f, value = filter_.split("-")
+        column = getattr(model, field)
+        if f == "eq":
+            _filters.append(column == value)
+    select_ = select_.where(*_filters)
+
+    # handle sorting.
+    sorters = [] if sorters is None else sorters.split()
+
     _sorters = []
     for sorter in sorters:
         field, direction = sorter.split("-")
@@ -425,6 +754,28 @@ def update_answer_adding_history(*, answer_in: AnswerUpdate) -> AnswerRead:
     db.session.commit()
 
     return AnswerRead.from_orm(answer)
+
+
+def update_post_comment_adding_history(
+    *, post_comment_in: PostCommentUpdate
+) -> PostCommentRead:
+    """Update question, insert question history in table."""
+
+    post_comment = _get_post_comment(post_comment_in.id)
+
+    history_in = PostCommentHistoryCreate(
+        comment_id=post_comment.id, content=post_comment.content
+    )
+    history = PostCommentHistory(**history_in.dict())
+    db.session.add(history)
+
+    updated_data = post_comment_in.dict(include={"content", "updated_at"})
+    for column, value in updated_data.items():
+        setattr(post_comment, column, value)
+
+    db.session.commit()
+
+    return PostCommentRead.from_orm(post_comment)
 
 
 def create_answer_comment(*, comment_in: AnswerCommentCreate) -> AnswerCommentRead:
@@ -545,7 +896,15 @@ def mark_answer_as_unanswered(*, answer_id: int):
 
 
 def get_all_answer_comments_by_commons(
-    *, page, per_page, max_per_page, filters, sorters, query: str, answer_id: int
+    *,
+    page,
+    per_page,
+    max_per_page,
+    filters,
+    sorters,
+    periods,
+    query: str,
+    answer_id: int
 ) -> Pagination:
     """Select all answer comments in specific answer by common parameters.
 
@@ -562,6 +921,8 @@ def get_all_answer_comments_by_commons(
         select_ = select_.where(where_)
 
     # handle filtering.
+    filters = [] if filters is None else filters.split()
+
     _filters = []
     for filter_ in filters:
         field, f, value = filter_.split("-")
@@ -571,6 +932,8 @@ def get_all_answer_comments_by_commons(
     select_ = select_.where(*_filters)
 
     # handle sorting.
+    sorters = [] if sorters is None else sorters.split()
+
     _sorters = []
     for sorter in sorters:
         field, direction = sorter.split("-")
@@ -582,3 +945,180 @@ def get_all_answer_comments_by_commons(
 
     # handle paginating and return.
     return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)
+
+
+def _get_post_tag_by_name(name: str) -> PostTagRead | None:
+    """Select post tag by name."""
+
+    return db.session.scalars(select(PostTag).filter_by(name=name)).one_or_none()
+
+
+def _create_post_tag_by_name(name: str) -> PostTag:
+    """Create tag by name."""
+
+    tag = PostTag(name=name)
+    db.session.add(tag)
+    db.session.commit()
+
+    return tag
+
+
+def get_or_create_post_tags(*, tags_in: list[str]) -> list[PostTagRead]:
+    """Select tags (Create if tags doesn't exist)."""
+
+    tags = []
+    for name in tags_in:
+        tag = _get_post_tag_by_name(name)
+
+        if tag is not None:
+            tags.append(tag)
+        else:
+            tags.append(_create_post_tag_by_name(name))
+
+    return tags
+
+
+def create_post(*, post_in: PostCreate, tags_in: list[PostTag]) -> PostRead:
+    """Insert post in table."""
+
+    post = Post(**post_in.dict())
+    for tag_in in tags_in:
+        post.tags.append(tag_in)
+    db.session.add(post)
+    db.session.commit()
+
+    return PostRead.from_orm(post)
+
+
+def get_all_posts_by_commons_and_category(
+    *, page, per_page, max_per_page, filters, sorters, periods, query, category
+) -> Pagination:
+    """Select all posts by common parameters.
+
+    TODO
+    : non maintainable, not flexible...
+    : very limited form and functionality of search-filter-sorter...
+    """
+    select_ = select(Post).filter_by(category=category)
+
+    # handle searching.
+    if query is not None:
+        field, _, value = query.split("-", maxsplit=2)
+
+        where_ = None
+        if field == "all":
+            where_ = or_(
+                Post.title.contains(value),
+                Post.content.contains(value),
+                Post.user.has(User.nickname.contains(value)),
+            )
+        elif field == "author":
+            where_ = Post.user.has(User.nickname.contains(value))
+        else:
+            where_ = getattr(Post, field).contains(value)
+        select_ = select_.where(where_)
+
+    # handle filtering.
+    filters = [] if filters is None else filters.split()
+    periods = [] if periods is None else periods.split()
+
+    filters = filters + periods
+
+    _filters = []
+    for filter_ in filters:
+        field, f, value = filter_.split("-", 2)
+        column = getattr(Post, field)
+
+        # Field customizations
+        if field == "answered":
+            value = True if value.lower() == "true" else False
+        if field == "created_at":
+            value = list(df["value"] for df in date_filters if df["code"] == filter_)[0]
+
+        # Operators
+        if f == "eq":
+            _filters.append(column == value)
+        if f == "ge":
+            _filters.append(column >= value)
+
+    select_ = select_.where(*_filters)
+
+    # handle sorting.
+    sorters = [] if sorters is None else sorters.split()
+
+    _sorters = []
+    for sorter in sorters:
+        field, direction = sorter.split("-")
+        column = getattr(Post, field)
+        _sorters.append(column.asc() if direction == "asc" else column.desc())
+
+    _sorters.append(Post.created_at.desc())  # default sorting.
+    select_ = select_.order_by(*_sorters)
+
+    # handle paginating and return.
+    return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)
+
+
+def create_post_comment_vote(vote_in: PostCommentVoteCreate) -> PostCommentRead:
+    """Insert post comment vote and return relevant post comment."""
+
+    post_comment = _get_post_comment(vote_in.comment_id)
+    post_comment.vote_count += 1
+
+    vote = PostCommentVote(**vote_in.dict())
+    db.session.add(vote)
+    db.session.commit()
+
+    return PostCommentRead.from_orm(post_comment)
+
+
+def get_post_comment_vote(*, post_comment_id: int, user_id: int) -> PostCommentVote:
+    """Select post_comment vote."""
+
+    return db.session.scalars(
+        select(PostCommentVote).filter_by(
+            comment_id=post_comment_id, user_id=user_id
+        )
+    ).one_or_none()
+
+
+def delete_post_comment_vote(*, post_comment_id: int, user_id: int) -> PostCommentRead:
+    """Delete post comment vote and return relevant post comment."""
+
+    post_comment = _get_post_comment(post_comment_id)
+    post_comment.vote_count -= 1
+
+    vote = get_post_comment_vote(post_comment_id=post_comment_id, user_id=user_id)
+    db.session.delete(vote)
+    db.session.commit()
+
+    return PostCommentRead.from_orm(post_comment)
+
+
+def create_post_comment_reaction(
+    *, reaction_in: PostCommentReactionCreate
+) -> PostCommentRead:
+    """Insert post comment's reaction in table and return relevant post comment."""
+
+    post_comment = _get_post_comment(reaction_in.comment_id)
+
+    reaction = PostCommentReaction(**reaction_in.dict())
+    db.session.add(reaction)
+    db.session.commit()
+
+    return PostCommentRead.from_orm(post_comment)
+
+
+def delete_post_comment_reaction(
+    *, post_comment_id: int, user_id: int, code: str
+) -> PostCommentRead:
+    """Delete answer reaction and return relevant question."""
+
+    reaction = get_post_comment_reaction(
+        post_comment_id=post_comment_id, user_id=user_id, code=code
+    )
+    db.session.delete(reaction)
+    db.session.commit()
+
+    post_comment = get_post_comment(post_comment_id=post_comment_id)
+    return PostCommentRead.from_orm(post_comment)

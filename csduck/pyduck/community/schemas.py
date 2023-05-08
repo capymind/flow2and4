@@ -283,3 +283,214 @@ class AnswerCommentRead(AnswerCommentBase):
     user: UserRead
     history: list[AnswerCommentHistoryRead | None]
     reactions: list[AnswerCommentReactionRead | None]
+
+
+class PostReactionBase(PyduckSchema):
+    """Represent post reaction."""
+
+    user_id: int
+    post_id: int
+    code: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PostReactionCreate(PostReactionBase):
+    pass
+
+
+class PostReactionRead(PostReactionBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class PostVoteBase(PyduckSchema):
+    """Represent post vote."""
+
+    user_id: int
+    post_id: int
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PostVoteCreate(PostVoteBase):
+    pass
+
+
+class PostVoteRead(PostVoteBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class PostHistoryBase(PyduckSchema):
+    """Represent post history."""
+
+    post_id: int
+    title: str
+    content: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PostHistoryCreate(PostHistoryBase):
+    pass
+
+
+class PostHistoryRead(PostHistoryBase):
+    id: int
+
+
+class PostTagBase(PyduckSchema):
+    """Represent post tag."""
+
+    name: str
+
+
+class PostTagCreate(PostTagBase):
+    pass
+
+
+class PostTagRead(PostTagBase):
+    id: int
+
+
+class PostBase(PyduckSchema):
+    """Represent post."""
+
+    user_id: int
+    category: str
+    title: str
+    content: str
+    view_count: int = 0
+    vote_count: int = 0
+    comment_count: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime | None
+    deleted_at: datetime | None
+
+
+class PostCreate(PostBase):
+    pass
+
+
+class PostUpdate(PostBase):
+    id: int
+
+
+class PostRead(PostBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+    tags: list[PostTagRead | None]
+    history: list[PostHistoryRead | None]
+    votes: list[PostVoteRead | None]
+    reactions: list[PostReactionRead | None]
+
+
+class PostImageUploadBase(PyduckSchema):
+    """Represent post image upload."""
+
+    user_id: int
+    post_id: int | None
+    url: str
+    filename: str
+    original_filename: str
+    mimetype: str | None
+    filesize: int | None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PostImageUploadCreate(PostImageUploadBase):
+    pass
+
+
+class PostImageUploadRead(PostImageUploadBase):
+    id: int
+
+
+class PostCommentReactionBase(PyduckSchema):
+    """Represent answer reaction."""
+
+    user_id: int
+    comment_id: int
+    code: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PostCommentReactionCreate(PostCommentReactionBase):
+    pass
+
+
+class PostCommentReactionRead(PostCommentReactionBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class PostCommentHistoryBase(PyduckSchema):
+    """Represent comment history."""
+
+    comment_id: int
+    content: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PostCommentHistoryCreate(PostCommentHistoryBase):
+    pass
+
+
+class PostCommentHistoryRead(PostCommentHistoryBase):
+    id: int
+
+
+class PostCommentBase(PyduckSchema):
+    """Represent comment to post."""
+
+    user_id: int
+    post_id: int
+    parent_id: int | None
+    content: str
+    vote_count: int = 0
+    comment_count: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime | None
+    deleted_at: datetime | None
+
+
+class PostCommentCreate(PostCommentBase):
+    pass
+
+
+class PostCommentUpdate(PostCommentBase):
+    id: int
+
+
+class PostCommentRead(PostCommentBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+    history: list[AnswerCommentHistoryRead | None]
+    reactions: list[AnswerCommentReactionRead | None]
+
+
+class PostCommentVoteBase(PyduckSchema):
+    """Represent post comment vote."""
+
+    user_id: int
+    comment_id: int
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PostCommentVoteCreate(PostCommentVoteBase):
+    pass
+
+
+class PostCommentVoteRead(PostCommentVoteBase):
+    id: int
+
+    # relationship.
+    user: UserRead

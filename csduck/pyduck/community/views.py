@@ -2,7 +2,7 @@
 This is the module for handling requests related to pyduck community.
 """
 
-from datetime import timezone, datetime
+from datetime import timezone, datetime, date, timedelta
 import json
 import os
 import uuid
@@ -34,12 +34,23 @@ from csduck.pyduck.community.schemas import (
     AnswerCommentCreate,
     AnswerCommentUpdate,
     AnswerCommentReactionCreate,
+    PostCreate,
+    PostUpdate,
+    PostReactionCreate,
+    PostVoteCreate,
+    PostCommentCreate,
+    PostCommentReactionCreate,
+    PostCommentVoteCreate,
+    PostHistoryCreate,
+    PostCommentHistoryCreate,
+    PostCommentUpdate,
 )
 from werkzeug.utils import secure_filename
 from csduck.pyduck.community.service import (
     create_question_image_upload,
     create_question,
     get_or_create_tags,
+    create_post_comment,
     get_all_questions_by_commons,
     get_question,
     update_question_adding_history,
@@ -47,11 +58,22 @@ from csduck.pyduck.community.service import (
     get_question_vote,
     delete_question_vote,
     create_question_reaction,
+    create_post_comment_reaction,
+    delete_post_comment_vote,
+    delete_post_comment_reaction,
+    create_comment_to_post_comment,
     get_question_reaction,
     delete_question_reaction,
+    create_post_comment_vote,
+    get_post_comment_vote,
+    get_post_comment_reaction,
+    get_all_comments_to_post_comment_by_commons,
     create_answer,
     get_answer,
     create_answer_vote,
+    create_post_vote,
+    get_post_vote,
+    delete_post_vote,
     get_answer_vote,
     delete_answer_vote,
     create_answer_reaction,
@@ -68,9 +90,21 @@ from csduck.pyduck.community.service import (
     mark_answer_as_answered,
     mark_answer_as_unanswered,
     get_all_answer_comments_by_commons,
+    get_all_comments_to_post_by_commons,
+    create_post,
+    get_or_create_post_tags,
+    delete_post_reaction,
+    get_all_posts_by_commons_and_category,
+    get_post,
+    update_post_adding_history,
+    get_post_reaction,
+    create_post_reaction,
+    get_post_comment,
+    update_post_comment_adding_history,
 )
 from csduck.pyduck.schemas import CommonParameters
 from csduck.database import db
+from csduck.pyduck.community.helpers import date_filters
 
 logger = logging.getLogger(__name__)
 
@@ -87,15 +121,26 @@ bp = Blueprint(
 def index(category: str):
     """Show community page by category."""
 
-    commons = CommonParameters(**request.args.to_dict(flat=False))
+    commons = CommonParameters(**request.args.to_dict())
+
     if category == "help":
         qp = get_all_questions_by_commons(**commons.dict())
 
-        return render_template("community/index_help.html.jinja", qp=qp)
-    
-    if category == "life":
-        return render_template("community/index_life.html.jinja")
-        
+        return render_template(
+            "community/index_help.html.jinja", qp=qp, date_filters=date_filters
+        )
+
+    else:
+        post_pagination = get_all_posts_by_commons_and_category(
+            **commons.dict(), category=category
+        )
+
+        return render_template(
+            f"community/index/index.html.jinja",
+            post_pagination=post_pagination,
+            date_filters=date_filters,
+            category=category,
+        )
 
     return render_template("community/index.html.jinja")
 
@@ -111,6 +156,20 @@ def questions():
     print(qp.total, qp.items)
 
     return render_template("community/question/questions.html.jinja", qp=qp)
+
+
+@bp.route("/posts", methods=[HTTPMethod.GET])
+def posts():
+    """
+    (GET) Show posts fragment.
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+    post_pagination = get_all_posts_by_commons(**commons.dict())
+
+    return render_template(
+        "community/post/post_list.html.jinja", post_pagination=post_pagination
+    )
 
 
 @bp.route(
@@ -130,6 +189,31 @@ def question(question_id: int):
     ap = get_all_answers_by_commons(**commons.dict(), question_id=question_id)
 
     return render_template("community/question/question.html.jinja", q=q, ap=ap)
+
+
+@bp.route(
+    "/posts/<int:post_id>",
+    methods=[HTTPMethod.GET, HTTPMethod.DELETE],
+)
+def post(post_id: int):
+    """
+    (GET) Show post page.
+    """
+
+    post = get_post(post_id=post_id)
+    if post is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    commons = CommonParameters(**request.args.to_dict())
+    post_comment_pagination = get_all_comments_to_post_by_commons(
+        **commons.dict(), post_id=post_id
+    )
+
+    return render_template(
+        "community/post/post.html.jinja",
+        post=post,
+        post_comment_pagination=post_comment_pagination,
+    )
 
 
 @bp.route(
@@ -162,7 +246,7 @@ def question_edit(question_id: int):
                 **request.form.to_dict(),
                 id=q_old.id,
                 user_id=current_user.id,
-                updated_at=datetime.now(timezone.utc)
+                updated_at=datetime.now(timezone.utc),
             )
 
         except ValidationError as e:
@@ -175,6 +259,48 @@ def question_edit(question_id: int):
         return redirect(url_for("pyduck.community.question", question_id=question.id))
 
     return render_template("community/question/edit.html.jinja", q=q_old)
+
+
+@bp.route("/posts/<int:post_id>/edit", methods=[HTTPMethod.GET, HTTPMethod.POST])
+@login_required
+def post_edit(post_id: int):
+    """
+    (GET) Show post edit page.
+    (POST) Process post edit.
+    """
+
+    post_old = get_post(post_id=post_id)
+    if post_old is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    if post_old.user_id != current_user.id:
+        abort(HTTPStatus.UNAUTHORIZED)
+
+    if request.method == HTTPMethod.POST:
+        tags_dict = request.form.get("tags")
+        tags_in = []
+        if tags_dict:
+            tags_in = [tag.get("value") for tag in json.loads(tags_dict)]
+            tags_in = get_or_create_post_tags(tags_in=tags_in)
+
+        post_in = None
+        try:
+            post_in = PostUpdate(
+                **request.form.to_dict(),
+                id=post_old.id,
+                category=post_old.category,
+                user_id=current_user.id,
+                updated_at=datetime.now(timezone.utc),
+            )
+
+        except ValidationError as e:
+            logger.warn(e)
+
+        post = update_post_adding_history(post_in=post_in, tags_in=tags_in)
+
+        return redirect(url_for("pyduck.community.post", post_id=post.id))
+
+    return render_template("community/post/edit.html.jinja", post=post_old)
 
 
 @bp.route(
@@ -231,6 +357,106 @@ def question_reaction(question_id: int):
 
 
 @bp.route(
+    "/posts/<int:post_id>/reactions",
+    methods=[HTTPMethod.POST],
+)
+@login_required
+def post_reaction(post_id: int):
+    """
+    (POST) Process reaction or unreaction and return fragment.
+    """
+
+    post = get_post(post_id=post_id)
+    if post is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    action, code = request.form.get("action").split()
+
+    # HACK: hard-coded.
+    if code not in [
+        "thumbs_up",
+        "thumbs_down",
+        "heart",
+        "tada",
+        "smile",
+        "sweat",
+        "sweat",
+        "eyes",
+    ]:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    r = get_post_reaction(post_id=post.id, user_id=current_user.id, code=code)
+
+    if action == "react":
+        if r is not None:
+            abort(HTTPStatus.UNPROCESSABLE_ENTITY)
+        reaction_in = PostReactionCreate(
+            user_id=current_user.id, post_id=post_id, code=code
+        )
+        post = create_post_reaction(reaction_in=reaction_in)
+        return render_template("community/post/reaction.html.jinja", post=post)
+
+    if action == "unreact":
+        if r is None:
+            abort(HTTPStatus.UNPROCESSABLE_ENTITY)
+        post = delete_post_reaction(post_id=post_id, user_id=current_user.id, code=code)
+        return render_template("community/post/reaction.html.jinja", post=post)
+
+
+@bp.route(
+    "/comments/<int:comment_id>/reactions",
+    methods=[HTTPMethod.POST],
+)
+@login_required
+def comment_reaction(comment_id: int):
+    """
+    (POST) Process reaction or unreaction and return fragment.
+    """
+
+    comment = get_comment(comment_id=comment_id)
+    if comment is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    action, code = request.form.get("action").split()
+
+    # HACK: hard-coded.
+    if code not in [
+        "thumbs_up",
+        "thumbs_down",
+        "heart",
+        "tada",
+        "smile",
+        "sweat",
+        "sweat",
+        "eyes",
+    ]:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    r = get_post_comment_reaction(question_id=q.id, user_id=current_user.id, code=code)
+
+    if action == "react":
+        if r is not None:
+            abort(HTTPStatus.UNPROCESSABLE_ENTITY)
+        reaction_in = PostCommentReactionCreate(
+            user_id=current_user.id, comment_id=comment_id, code=code
+        )
+        comment = create_post_comment_reaction(reaction_in=reaction_in)
+        return render_template(
+            "community/post_comment/reaction.html.jinja", comment=comment
+        )
+
+    if action == "unreact":
+        if r is None:
+            abort(HTTPStatus.UNPROCESSABLE_ENTITY)
+        comment = delete_post_comment_reaction(
+            comment_id=comment_id, user_id=current_user.id, code=code
+        )
+        return render_template(
+            "community/post_comment/reaction.html.jinja", comment=comment
+        )
+
+
+@bp.route(
     "/questions/<int:question_id>/vote", methods=[HTTPMethod.POST, HTTPMethod.DELETE]
 )
 @login_required
@@ -264,6 +490,36 @@ def question_vote(question_id: int):
         return render_vote(question=question, voted=False)
 
 
+@bp.route("/posts/<int:post_id>/vote", methods=[HTTPMethod.POST, HTTPMethod.DELETE])
+@login_required
+def post_vote(post_id: int):
+    """
+    (POST) Process vote and return fragment.
+    (DELETE) Process unvote and return fragment.
+    """
+
+    render_vote = get_template_attribute(
+        "community/post/render_vote.html.jinja", "render_vote"
+    )
+
+    post = get_post(post_id=post_id)
+    if post is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    if request.method == HTTPMethod.POST:
+        vote_in = PostVoteCreate(user_id=current_user.id, post_id=post_id)
+        post = create_post_vote(vote_in=vote_in)
+        return render_vote(post=post, voted=True)
+
+    if request.method == HTTPMethod.DELETE:
+        vote = get_post_vote(post_id=post_id, user_id=current_user.id)
+
+        if vote is None:
+            abort(HTTPStatus.BAD_REQUEST)
+        post = delete_post_vote(post_id=post_id, user_id=current_user.id)
+        return render_vote(post=post, voted=False)
+
+
 @bp.route("/help/new", methods=[HTTPMethod.GET, HTTPMethod.POST])
 @login_required
 def question_new():
@@ -295,16 +551,34 @@ def question_new():
 
 
 @bp.route("/<category>/new", methods=[HTTPMethod.GET, HTTPMethod.POST])
-def post(category: str):
+@login_required
+def post_new(category: str):
     """
     (GET) Show new post page.
     (POST) Process new post.
     """
 
     if request.method == HTTPMethod.POST:
-        ...
+        tags_dict = request.form.get("tags")
+        tags_in = []
+        if tags_dict:
+            tags_in = [tag.get("value") for tag in json.loads(tags_dict)]
+            tags_in = get_or_create_post_tags(tags_in=tags_in)
 
-    return render_template("community/post/new.html.jinja")
+        post_in = None
+        try:
+            post_in = PostCreate(
+                **request.form.to_dict(), user_id=current_user.id, category=category
+            )
+        except ValidationError as e:
+            logger.warn(e.errors)
+            return render_template("community/post/new.html.jinja", category=category)
+
+        create_post(post_in=post_in, tags_in=tags_in)
+        return redirect(url_for("pyduck.community.index", category=category))
+
+    return render_template("community/post/new.html.jinja", category=category)
+
 
 @bp.route("/<category>/upload/images", methods=[HTTPMethod.POST])
 @login_required
@@ -381,7 +655,7 @@ def answer():
             answer_in = AnswerUpdate(
                 **answer.dict(exclude={"content", "updated_at"}),
                 content=content,
-                updated_at=datetime.now(timezone.utc)
+                updated_at=datetime.now(timezone.utc),
             )
         except ValidationError as e:
             logger.warn(e.errors())
@@ -389,6 +663,67 @@ def answer():
         answer = update_answer_adding_history(answer_in=answer_in)
         res = make_response(
             render_template("community/answer/answer.html.jinja", answer=answer)
+        )
+
+    return res
+
+
+@bp.route("/posts/<post_id>/comments", methods=[HTTPMethod.POST, HTTPMethod.PUT])
+@login_required
+def post_comment(post_id: int):
+    """
+    (POST) Process comment creation to post
+    (PUT) Process comment modification to post
+    """
+
+    if request.method == HTTPMethod.POST:
+        post_comment_in = None
+        try:
+            post_comment_in = PostCommentCreate(
+                **request.form.to_dict(), user_id=current_user.id
+            )
+        except ValidationError as e:
+            logger.warn(e.errors())
+            abort(HTTPStatus.BAD_REQUEST)
+
+        post_comment = create_post_comment(post_comment_in=post_comment_in)
+
+        res = make_response(
+            render_template(
+                "community/post_comment/post_comment.html.jinja",
+                post_comment=post_comment,
+            )
+        )
+        res.headers["HX-Trigger-After-Settle"] = "postcomment-created"
+
+    if request.method == HTTPMethod.PUT:
+        post_comment_id = request.form.get("post_comment_id")
+        content = request.form.get("content")
+
+        if post_comment_id is None or content is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        post_comment = get_post_comment(post_comment_id=post_comment_id)
+        if post_comment is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        try:
+            post_comment_in = PostCommentUpdate(
+                **post_comment.dict(exclude={"content", "updated_at"}),
+                content=content,
+                updated_at=datetime.now(timezone.utc),
+            )
+        except ValidationError as e:
+            logger.warn(e.errors())
+
+        post_comment = update_post_comment_adding_history(
+            post_comment_in=post_comment_in
+        )
+        res = make_response(
+            render_template(
+                "community/post_comment/post_comment.html.jinja",
+                post_comment=post_comment,
+            )
         )
 
     return res
@@ -485,6 +820,111 @@ def comments(answer_id: int):
     return render_template("community/answer_comment/answer_comments.html.jinja", cp=cp)
 
 
+@bp.route("/posts/<int:post_id>/comments", methods=[HTTPMethod.GET])
+def comments_to_post(post_id: int):
+    """
+    (GET) Show comments to specific post.
+
+    notes:
+    - only first level. (not comments to post's comment)
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+    pagination = get_all_comments_to_post_by_commons(**commons.dict(), post_id=post_id)
+
+    return render_template(
+        "community/post_comment/comments_to_post.html.jinja", pagination=pagination
+    )
+
+
+@bp.route(
+    "/posts/<int:post_id>/comments/<int:post_comment_id>/comments",
+    methods=[HTTPMethod.POST, HTTPMethod.PUT],
+)
+@login_required
+def comment_to_post_comment(post_id: int, post_comment_id: int):
+    """
+    (POST) Process comment creation to post's comment.
+    (PUT) Process comment modification to post's comment.
+
+    notes:
+    - depth 2 like 대댓글(comment of comment)
+    """
+
+    if request.method == HTTPMethod.POST:
+        post_comment_in = None
+        try:
+            post_comment_in = PostCommentCreate(
+                **request.form.to_dict(),
+                user_id=current_user.id,
+                post_id=post_id,
+                parent_id=post_comment_id,
+            )
+        except ValidationError as e:
+            logger.warn(e.errors())
+            abort(HTTPStatus.BAD_REQUEST)
+
+        comment = create_comment_to_post_comment(post_comment_in=post_comment_in)
+
+        res = make_response(
+            render_template(
+                "community/post_comment/comment_to_post_comment.html.jinja",
+                comment=comment,
+            )
+        )
+        res.headers["HX-Trigger-After-Settle"] = "comment-to-post-comment-created"
+
+    if request.method == HTTPMethod.PUT:
+        comment_id = request.form.get("comment_id")
+        content = request.form.get("content")
+
+        if comment_id is None or content is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        comment = get_post_comment(post_comment_id=comment_id)
+        if comment is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        try:
+            comment_in = PostCommentUpdate(
+                **comment.dict(exclude={"content", "updated_at"}),
+                content=content,
+                updated_at=datetime.now(timezone.utc),
+            )
+        except ValidationError as e:
+            logger.warn(e.errors())
+
+        comment = update_post_comment_adding_history(post_comment_in=comment_in)
+        res = make_response(
+            render_template(
+                "community/post_comment/comment_to_post_comment.html.jinja",
+                comment=comment,
+            )
+        )
+
+    return res
+
+
+@bp.route(
+    "/posts/<int:post_id>/comments/<int:post_comment_id>/comments",
+    methods=[HTTPMethod.GET],
+)
+def comments_to_post_comment(post_id: int, post_comment_id: int):
+    """
+    (GET) Show comments to specific post's comment.
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+    pagination = get_all_comments_to_post_comment_by_commons(
+        **commons.dict(), post_comment_id=post_comment_id
+    )
+
+    return render_template(
+        "community/post_comment/comments_to_post_comment.html.jinja",
+        pagination=pagination,
+    )
+
+
 @bp.route("/comments", methods=[HTTPMethod.POST, HTTPMethod.PUT])
 @login_required
 def comment_to_answer():
@@ -528,7 +968,7 @@ def comment_to_answer():
             comment_in = AnswerCommentUpdate(
                 **comment.dict(exclude={"content", "updated_at"}),
                 content=content,
-                updated_at=datetime.now(timezone.utc)
+                updated_at=datetime.now(timezone.utc),
             )
         except ValidationError as e:
             logger.warn(e.errors())
@@ -651,3 +1091,96 @@ def unanswered(answer_id: int):
     res.headers["HX-Trigger"] = "question-answered"
 
     return res
+
+
+@bp.route(
+    "/comments/<int:post_comment_id>/vote", methods=[HTTPMethod.POST, HTTPMethod.DELETE]
+)
+@login_required
+def post_comment_vote(post_comment_id: int):
+    """
+    (POST) Process vote and return fragment.
+    (DELETE) Process unvote and return fragment.
+    """
+
+    render_vote = get_template_attribute(
+        "community/post_comment/render_vote.html.jinja", "render_vote"
+    )
+
+    post_comment = get_post_comment(post_comment_id=post_comment_id)
+    if post_comment is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    if request.method == HTTPMethod.POST:
+        vote_in = PostCommentVoteCreate(
+            user_id=current_user.id, comment_id=post_comment_id
+        )
+        post_comment = create_post_comment_vote(vote_in=vote_in)
+        return render_vote(post_comment=post_comment, voted=True)
+
+    if request.method == HTTPMethod.DELETE:
+        vote = get_post_comment_vote(
+            post_comment_id=post_comment_id, user_id=current_user.id
+        )
+
+        if vote is None:
+            abort(HTTPStatus.BAD_REQUEST)
+        post_comment = delete_post_comment_vote(
+            post_comment_id=post_comment_id, user_id=current_user.id
+        )
+        return render_vote(post_comment=post_comment, voted=False)
+
+
+@bp.route(
+    "/posts/<int:post_id>/comments/<int:post_comment_id>/reactions",
+    methods=[HTTPMethod.POST],
+)
+@login_required
+def post_comment_reaction(post_id: int, post_comment_id: int):
+    """
+    (POST) Process reaction or unreaction and return fragment.
+    """
+
+    post_comment = get_post_comment(post_comment_id=post_comment_id)
+    if post_comment is None:
+        abort(HTTPStatus.NOT_FOUND)
+
+    action, code = request.form.get("action").split()
+
+    # HACK: hard-coded.
+    if code not in [
+        "thumbs_up",
+        "thumbs_down",
+        "heart",
+        "tada",
+        "smile",
+        "sweat",
+        "sweat",
+        "eyes",
+    ]:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    r = get_post_comment_reaction(
+        post_comment_id=post_comment.id, user_id=current_user.id, code=code
+    )
+
+    if action == "react":
+        if r is not None:
+            abort(HTTPStatus.UNPROCESSABLE_ENTITY)
+        reaction_in = PostCommentReactionCreate(
+            user_id=current_user.id, comment_id=post_comment_id, code=code
+        )
+        post_comment = create_post_comment_reaction(reaction_in=reaction_in)
+        return render_template(
+            "community/post_comment/reaction.html.jinja", post_comment=post_comment
+        )
+
+    if action == "unreact":
+        if r is None:
+            abort(HTTPStatus.UNPROCESSABLE_ENTITY)
+        post_comment = delete_post_comment_reaction(
+            post_comment_id=post_comment_id, user_id=current_user.id, code=code
+        )
+        return render_template(
+            "community/post_comment/reaction.html.jinja", post_comment=post_comment
+        )

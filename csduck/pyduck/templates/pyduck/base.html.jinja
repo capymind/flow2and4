@@ -24,6 +24,11 @@
             display: none;
         }
 
+        /* Alpine.js */
+        [x-cloak] {
+            display: none !important;
+        }
+
         /* 
         stick footer 
         https://css-tricks.com/couple-takes-sticky-footer/#aa-there-is-flexbox
@@ -59,7 +64,9 @@
             overflow-y: auto;
         }
 
-        .answer .ck.ck-content:not(.ck-comment__input *) {
+        .answer .ck.ck-content:not(.ck-comment__input *),
+        .comment .ck.ck-content:not(.ck-comment__input *),
+        .post-comment .ck.ck-content:not(.ck-comment__input *) {
             height: 150px;
             width: 100%;
         }
@@ -299,6 +306,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
     <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
     <!-- 3-rd party javascript [END] -->
+
+    <script>
+        /* [START] Prevent enter from submitting form */
+        const elems = document.querySelectorAll("[data-prevent-enter-submit]")
+        elems.forEach((elem) => {
+            elem.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault()
+                }
+            })
+        })
+        /* Prevent enter from submitting form [END] */
+    </script>
     {% block javascript %}
     {% endblock javascript %}
 </body>

@@ -5,8 +5,8 @@ This is the module for defining fixtures used across tests.
 import pytest
 
 from flask import Flask
-from csduck.database import db as db_
-from csduck.app import create_app
+from flow2and4.database import db as db_
+from flow2and4.app import create_app
 
 
 @pytest.fixture(scope="session")

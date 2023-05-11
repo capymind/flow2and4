@@ -1,0 +1,312 @@
+{% extends "pyduck/base.html.jinja" %}
+
+
+{% from "community/post/render_vote.html.jinja" import render_vote %}
+{% from "community/post/render_reaction.html.jinja" import render_reaction with context %}
+{% from "community/post_comment/render_post_comment.html.jinja" import render_post_comment with context %}
+
+
+{% block main %}
+{% set c = sidebar_community|selectattr("code", "eq", post.category)|list|first %}
+{% set voted = post.votes|selectattr("user_id", "eq", current_user.id)|list|length %}
+<div class="container pt-5 px-2 px-lg-5">
+    <div class="row">
+        <div class="col">
+            <div>
+                <div class="fs-4 fw-bold">
+                    {{ post.title }} <span class="text-secondary">#{{ post.id }}</span>
+                </div>
+                <div class="pt-2">
+                    <small>
+                        <span class="fw-bold">{{ post.user.nickname }}</span>님께서
+                        <span class="fw-bold">{{ c.name }}</span>에 작성해주셨습니다.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-12 col-lg-8">
+            <div class="p-3 border rounded-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <img class="rounded-circle" src="{{ post.user.avatar.url }}" width="33" height="33">
+                        <span>{{ post.user.nickname }}</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if post.history|length %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <small>수정이력</small>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end px-3">
+                                <div>{{ post.history|length}}번 수정됨</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if current_user.id is eq post.user_id %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item"
+                                       href="{{ url_for('pyduck.community.post_edit', post_id=post.id) }}">수정하기</a>
+                                </li>
+                                <li>
+                                    {% if post.comment_count is gt 0 %}
+                                    <div data-bs-toggle="tooltip"
+                                         data-bs-title="댓글이 달린 글의 경우 별도의 요청 없이 삭제할 수 없습니다."
+                                         style="cursor:not-allowed;">
+                                        <div
+                                             class="dropdown-item disabled d-flex justify-content-between align-items-center">
+                                            <span>삭제하기</span>
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <button class="dropdown-item"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="[data-pd-modal-manager]"
+                                            x-data
+                                            @click="$dispatch(
+                                            'delete-post',
+                                            { 
+                                                url: '{{ url_for('pyduck.community.post', post_id=post.id) }}',
+                                                target: {{ post.id }}
+                                            })">
+                                        삭제하기
+                                    </button>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="pt-4">
+                    {{ post.content }}
+                </div>
+                <div class="pt-4 d-flex gap-2">
+                    {{ render_vote(post=post, voted=voted) }}
+                    {{ render_reaction(post=post) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col pt-3">
+            <div class="d-flex"
+                 x-data="{
+                    postCommentCount: {{ post.comment_count }}
+            }"
+                 @postcomment-created.document="postCommentCount++"
+                 @postcomment-deleted.document="postCommentCount=postCommentCount--">
+                <div x-text="postCommentCount + '개의 댓글'"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container px-2 px-lg-5 pt-2 comments">
+    {% for post_comment in post_comment_pagination %}
+    {{ render_post_comment(post_comment) }}
+    <!-- [start] infinite scroll trigger -->
+    {% if loop.last and post_comment_pagination.has_next %}
+    <div
+         hx-get="{{ url_for('pyduck.community.comments_to_post', post_id=post.id, page=post_comment_pagination.next_num) }}"
+         hx-trigger="revealed"
+         hx-swap="afterend">
+    </div>
+    {% endif %}
+    <!-- infinite scroll trigger [end] -->
+    {% endfor %}
+</div>
+<div class="container px-2 px-lg-5 pb-5">
+    <div class="row">
+        <div class="col-12 col-lg-8 pt-3">
+            <div x-data="{
+                    editmode: false
+                }"
+                 @postcomment-created="editmode=false">
+                <button
+                        class="btn btn-outline-secondary w-100"
+                        @click="editmode=true; $nextTick(() => {$dispatch('require-editor')})"
+                        x-show="!editmode">
+                    <span>댓글 작성하기</span>
+                </button>
+                <template x-if="editmode">
+                    <form class="border rounded-2 p-3 comment"
+                          hx-post="{{ url_for('pyduck.community.post_comment', post_id=post.id )}}"
+                          hx-target=".comments"
+                          hx-swap="beforeend">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                        <textarea id="editor" name="content"></textarea>
+                        <div class="pt-2 text-end">
+                            <button type="button"
+                                    class="btn btn-secondary rounded-0"
+                                    @click="editmode=false">취소하기</button>
+                            <button class="btn btn-success rounded-0">등록하기</button>
+                        </div>
+                    </form>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade"
+     tabindex="-1"
+     aria-labelledby="modal-label"
+     aria-hidden="true"
+     data-pd-modal-manager
+     x-data="{
+        deletePost: false,
+        deletePostComment: false,
+        deleteCommentToPostComment: false,
+        url: '',
+        target: '',
+     }"
+     @delete-post.document="
+        deletePost=true;
+        target=$event.detail.target;
+        url=$event.detail.url; 
+        $nextTick(() => { htmx.process(document.body) })"
+     @delete-post-comment.document="
+        deletePostComment=true;
+        target=$event.detail.target;
+        url=$event.detail.url; 
+        $nextTick(() => { htmx.process(document.body) })"
+     @delete-comment-to-post-comment.document="
+        deleteCommentToPostComment=true;
+        target=$event.detail.target;
+        url=$event.detail.url; 
+        $nextTick(() => { htmx.process(document.body) })">
+    <div class="modal-dialog">
+        <template x-if="deletePost">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5 fw-bold" id="modal-label">
+                        <i class="bi bi-trash3"></i> 게시글 삭제
+                    </h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    게시글을 삭제 하시겠습니까?
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-outline-secondary rounded-0"
+                            data-bs-dismiss="modal">
+                        취소
+                    </button>
+                    <form :hx-delete="url" hx-swap="none">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-outline-danger rounded-0" data-bs-dismiss="modal">
+                            삭제
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </template>
+        <template x-if="deletePostComment">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5 fw-bold" id="modal-label">
+                        <i class="bi bi-trash3"></i> 댓글 삭제
+                    </h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    댓글 삭제 하시겠습니까?
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-outline-secondary rounded-0"
+                            data-bs-dismiss="modal">
+                        취소
+                    </button>
+                    <form
+                          :hx-delete="url"
+                          :hx-target="`[data-pd-post-comment='${target}']`"
+                          hx-swap="delete">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-outline-danger rounded-0" data-bs-dismiss="modal">
+                            삭제
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </template>
+        <template x-if="deleteCommentToPostComment">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5 fw-bold" id="modal-label">
+                        <i class="bi bi-trash3"></i> 대댓글 삭제
+                    </h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    대댓글을 삭제 하시겠습니까?
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-outline-secondary rounded-0"
+                            data-bs-dismiss="modal">
+                        취소
+                    </button>
+                    <form
+                          :hx-delete="url"
+                          :hx-target="`[data-pd-comment-to-post-comment='${target}']`"
+                          hx-swap="delete">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-outline-danger rounded-0" data-bs-dismiss="modal">
+                            삭제
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+{% endblock main %}
+
+
+{% block javascript %}
+{{ super() }}
+<script>
+    document.body.addEventListener("require-editor", (e) => {
+
+        let _selector;
+        if (e.detail.target === 'answer') {
+            _selector = `[data-pd-editor-id='${e.detail.id}']`
+        } else if (e.detail.target === 'comment') {
+            _selector = `[data-pd-comment-editor='${e.detail.id}']`
+        } else if (e.detail.target === 'post_comment') {
+            _selector = `[data-pd-post-comment-editor='${e.detail.id}']`
+        } else if (e.detail.target === 'comment_to_post_comment') {
+            _selector = `[data-pd-comment-to-post-comment-editor='${e.detail.id}']`
+        } else {
+            _selector = '#editor'
+        }
+
+        ClassicEditor
+            .create(document.querySelector(_selector), {
+                simpleUpload: {
+                    uploadUrl: "{{ url_for('pyduck.community.image_upload', category='life') }}",
+                    headers: {
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                    }
+                }
+            })
+            .then((editor) => {
+                htmx.process(document.body);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    })
+</script>
+{% endblock javascript %}

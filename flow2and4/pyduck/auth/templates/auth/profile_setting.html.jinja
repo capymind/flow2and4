@@ -1,0 +1,119 @@
+{% extends "pyduck/base.html.jinja" %}
+
+
+{% block main %}
+<div class="container">
+    <div class="row pt-5">
+        <div class="col-12 text-center">
+            <div class="display-4">
+                <i class="bi bi-person-vcard"></i>
+            </div>
+            <div>
+                <h1 class="fs-2 fw-bold">내 프로필 관리</h1>
+                <p class="pt-3 text-secondary">
+                    아바타 및 배경 사진, 자기소개 등
+                    <br>프로필을 다양하게 꾸며보세요 :)
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="text-end">
+                <button class="btn btn-primary rounded-0">프로필 저장하기</button>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="pt-5">
+                <div class="fs-5 fw-bold">
+                    내 프로필 배경 사진
+                </div>
+                <div class="pt-1 d-flex gap-1 align-items-center">
+                    <div>
+                        <img class="rounded-circle" src="{{ current_user.avatar.url }}" width="120px" height="120px">
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-success rounded-0">사진 바꾸기</button>
+                        <button class="btn btn-outline-danger rounded-0">사진 지우기</button>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-3">
+                <div class="fs-5 fw-bold">
+                    내 프로필 아바타 사진
+                </div>
+                <div class="pt-1 d-flex gap-1 align-items-center">
+                    <div>
+                        <img class="rounded-circle" src="{{ current_user.avatar.url }}" width="120px" height="120px">
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-success rounded-0">사진 바꾸기</button>
+                        <button class="btn btn-outline-danger rounded-0">사진 지우기</button>
+                    </div>
+                </div>
+            </div>
+            <div class="about-me pt-5"
+                 x-data="{
+                    editor: '',
+                    counter: '',
+                    characters: '',
+                    init() {
+                        ClassicEditor
+                        .create(
+                            document.querySelector('#about-me-editor'), {
+                                toolbar: []
+                            }
+                        )
+                        .then((editor) => {
+                            this.editor = editor;
+                            this.counter = editor.plugins.get('WordCount');
+                            this.characters = this.counter.characters;
+                            editor.model.document.on('change:data', () => {$dispatch('about-me-change')})
+                        })
+                    }
+                }" @about-me-change="characters=counter.characters">
+                <div class="d-flex justify-content-between align-items-end">
+                    <div class="fs-5 fw-bold">자기 소개</div>
+                    <div>
+                        글자수 제한:
+                        <span
+                              :class="characters > 150 ? 'fw-bold text-danger' : 
+                                          characters > 120 ? 'fw-bold text-warning'  : 
+                                          ''"
+                              x-text="characters">
+                        </span>
+                        <span>/ 150</span>
+                    </div>
+                </div>
+                <div class="pt-1">
+                    <textarea id="about-me-editor"></textarea>
+                </div>
+                <div class="text-secondary pt-1">
+                    <small class="text-secondary">
+                        자신을 간단히 소개해보세요!
+                        굵게(Ctrl + B), 기울게(Ctrl + I) 적용 가능 및 링크를 삽입할 수 있습니다.
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <section class="">
+                <h1 class="fs-5 fw-bold">
+                    내 프로필 미리보기
+                </h1>
+                <div class="border rounded-2">
+                    초코
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock main %}
+
+
+{% block javascript %}
+{{ super() }}
+<script>
+
+</script>
+{% endblock javascript %}

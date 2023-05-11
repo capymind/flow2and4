@@ -35,21 +35,11 @@ def create_app(mode: str = "dev"):
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # [START] Register blueprints
-    from flow2and4.views import bp as bp
-    from flow2and4.auth.views import bp as bp_auth
-    from flow2and4.duckwave_ms.views import bp as bp_duckwave_ms
-    from flow2and4.duckwave_os.views import bp as bp_duckwave_os
-    from flow2and4.duckwave_pg.views import bp as bp_duckwave_pg
-    from flow2and4.duckwave_cn.views import bp as bp_duckwave_cn
+    from flow2and4.csduck.views import bp as bp
 
     app.register_blueprint(bp, subdomain="csduck")
-    app.register_blueprint(bp_auth, subdomain="csduck")
-    app.register_blueprint(bp_duckwave_ms, subdomain="csduck")
-    app.register_blueprint(bp_duckwave_os, subdomain="csduck")
-    app.register_blueprint(bp_duckwave_pg, subdomain="csduck")
-    app.register_blueprint(bp_duckwave_cn, subdomain="csduck")
 
-    from flow2and4.rodi.views import bp as bp_rodi
+    from flow2and4.myweb.views import bp as bp_rodi
 
     app.register_blueprint(bp_rodi)
 
@@ -92,7 +82,7 @@ def create_app(mode: str = "dev"):
     bcrypt.init_app(app)
 
     # Login.
-    from flow2and4.auth.service import get_user_for_session
+    from flow2and4.csduck.auth.service import get_user_for_session
     from flow2and4.pyduck.auth.service import get_pyduck_user_for_session
 
     login_manager.init_app(app)

@@ -28,7 +28,7 @@ class User(db.Model):
     deleted_at: Mapped[str | None]
 
     # relationship
-    avatar: Mapped["UserAvatar"] = relationship()
+    avatar: Mapped["UserAvatar"] = relationship("csduck.auth.models.UserAvatar")
 
 
 class UserAvatar(ImageUploadMixin, db.Model):

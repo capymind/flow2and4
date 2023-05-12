@@ -1,0 +1,67 @@
+<form class="pt-5"
+      hx-post="{{ url_for('pyduck.auth.about_me')}}"
+      hx-swap="none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="about-me border p-3 rounded-2"
+         x-data="{
+                    editor: '',
+                    counter: '',
+                    characters: '',
+                    init() {
+                        ClassicEditor
+                        .create(
+                            document.querySelector('#about-me-editor'), {
+                                toolbar: []
+                            }
+                        )
+                        .then((editor) => {
+                            this.editor = editor;
+                            this.counter = editor.plugins.get('WordCount');
+                            this.characters = this.counter.characters;
+                            editor.model.document.on('change:data', () => {
+                                let aboutMe = editor.getData()
+                                $dispatch(
+                                    'about-me-change', { content: aboutMe }
+                                )
+                            })
+                        })
+                    }
+                }"
+         @about-me-change="characters=counter.characters">
+        <div class="pt-2 fs-5 fw-bold">
+            자기 소개
+        </div>
+        <hr>
+        <div class="text-secondary pt-1">
+            <small class="text-secondary">
+                자신을 간단히 소개해보세요!
+                굵게(Ctrl + B), 기울게(Ctrl + I) 적용 가능 및 링크를 삽입할 수 있습니다.
+            </small>
+        </div>
+        <div class="pt-2 px-1">
+            <textarea id="about-me-editor" name="about_me">
+                        {% if current_user.about_me is not none %}
+                        {{ current_user.about_me }}
+                        {% endif %}
+                        </textarea>
+            <div class="text-end">
+                글자수 제한:
+                <span
+                      :class="characters > 150 ? 'fw-bold text-danger' : 
+                            characters > 120 ? 'fw-bold text-warning'  : 
+                            ''"
+                      x-text="characters">
+                </span>
+                <span>/ 150</span>
+            </div>
+        </div>
+        <div class="pt-3 text-end">
+            <button
+                    class="btn btn-primary rounded-0"
+                    :class="characters === 0 ? 'disabled' :
+                            characters > 150 ? 'disabled' : ''">
+                자기 소개 저장하기
+            </button>
+        </div>
+    </div>
+</form>

@@ -118,6 +118,10 @@
 
 <body>
     {% include "pyduck/header/header.html.jinja" %}
+    <!-- [START] toast manager: handle all toasts -->
+    {% block toast_manager %}
+    {% endblock toast_manager %}
+    <!-- toast manager: handle all toasts [END] -->
     <div class="content container-fluid px-0">
         <div class="d-flex align-items-stretch h-100">
             <!-- [START] sidbar -->
@@ -334,6 +338,12 @@
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
         const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
         /* bootstrap toolip opt-in [END] */
+
+        /* [START] bootstrap toast opt-in */
+        const toastElList = document.querySelectorAll('.toast')
+        const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl))
+        /* bootstrap toast opt-in [END] */
+
     </script>
     {% block javascript %}
     {% endblock javascript %}

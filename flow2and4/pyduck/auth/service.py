@@ -6,8 +6,9 @@ from sqlalchemy import select
 from flow2and4.database import db
 from flow2and4.pyduck.auth.models import (
     User,
-    PyduckUserAvatar,
     UserBackdrop,
+    UserSns,
+    UserAvatar,
     UserVerificationEmail,
 )
 from flow2and4.pyduck.auth.schemas import (
@@ -20,6 +21,10 @@ from flow2and4.pyduck.auth.schemas import (
     UserVerificationEmailRead,
     UserBackdropCreate,
     UserBackdropRead,
+    UserSnsCreate,
+    UserSnsRead,
+    UserAvatarUpdate,
+    UserBackdropUpdate,
 )
 
 
@@ -62,7 +67,7 @@ def get_user_by_username(*, username: str) -> UserReadForSession | None:
 def create_user_avatar(*, avatar_in: UserAvatarCreate) -> UserAvatarRead:
     """Insert user avatar in table."""
 
-    avatar = PyduckUserAvatar(**avatar_in.dict())
+    avatar = UserAvatar(**avatar_in.dict())
     db.session.add(avatar)
     db.session.commit()
 
@@ -116,9 +121,103 @@ def verify_user(*, user_id: int) -> UserRead:
     return UserRead.from_orm(user)
 
 
-def update_about_me(*, user_id: int, about_me: str):
+def update_about_me(*, user_id: int, about_me: str) -> None:
     """Update user's about_me."""
 
     user = _get_user(user_id)
     setattr(user, "about_me", about_me)
     db.session.commit()
+
+
+def delete_and_create_user_sns(
+    *, user_id: int, snss_in: list[UserSnsCreate]
+) -> list[UserSnsRead]:
+    """Delete user's old sns and replace(create) it with new sns."""
+
+    user = _get_user(user_id)
+    user.sns = []
+
+    snss = []
+    for sns_in in snss_in:
+        snss.append(UserSns(**sns_in.dict()))
+
+    db.session.add_all(snss)
+    db.session.commit()
+
+    return [UserSnsRead.from_orm(sns) for sns in snss]
+
+
+def _get_user_sns_by_user_id(*, user_id) -> list[UserSns | None]:
+    """Get user sns by user id."""
+    return db.session.scalars(select(UserSns).filter_by(user_id=user_id)).all()
+
+
+def get_user_sns_by_user_id(*, user_id) -> list[UserSnsRead | None]:
+    """Get user avatar by user id."""
+    return [
+        UserSnsRead.from_orm(sns) for sns in _get_user_sns_by_user_id(user_id=user_id)
+    ]
+
+
+def _get_user_avatar_by_user_id(*, user_id) -> UserAvatar:
+    """Get user backdrop by user id."""
+    return db.session.scalars(select(UserAvatar).filter_by(user_id=user_id)).one()
+
+
+def get_user_avatar_by_user_id(*, user_id) -> UserAvatarRead:
+    """Get user avatar by user id."""
+    return _get_user_avatar_by_user_id(user_id=user_id)
+
+
+def _get_user_backdrop_by_user_id(*, user_id) -> UserBackdrop:
+    """Get user backdrop by user id."""
+    return db.session.scalars(select(UserBackdrop).filter_by(user_id=user_id)).one()
+
+
+def get_user_backdrop_by_user_id(*, user_id) -> UserBackdropRead:
+    """Get user backdrop by user id."""
+    return _get_user_backdrop_by_user_id(user_id=user_id)
+
+
+def _get_user_backdrop(id) -> UserBackdrop:
+    """Get user backdrop by id."""
+    return db.session.scalars(select(UserBackdrop).filter_by(id=id)).one()
+
+
+def update_user_backdrop(*, backdrop_in: UserBackdropUpdate) -> UserBackdropRead:
+    """Update user's backdrop."""
+
+    backdrop = _get_user_backdrop(backdrop_in.id)
+
+    updated_data = backdrop_in.dict(
+        exclude={
+            "id",
+        }
+    )
+    for column, value in updated_data.items():
+        setattr(backdrop, column, value)
+
+    db.session.commit()
+    return UserBackdropRead.from_orm(backdrop)
+
+
+def _get_user_avatar(id) -> UserAvatar:
+    """Get user avatar by id."""
+    return db.session.scalars(select(UserAvatar).filter_by(id=id)).one()
+
+
+def update_user_avatar(*, avatar_in: UserAvatarUpdate) -> UserAvatarRead:
+    """Update user's backdrop."""
+
+    avatar = _get_user_avatar(avatar_in.id)
+
+    updated_data = avatar_in.dict(
+        exclude={
+            "id",
+        }
+    )
+    for column, value in updated_data.items():
+        setattr(avatar, column, value)
+
+    db.session.commit()
+    return UserAvatarRead.from_orm(avatar)

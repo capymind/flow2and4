@@ -1,0 +1,166 @@
+{% set github = snss|selectattr("platform", "eq", "github")|list|first %}
+{% set twitter = snss|selectattr("platform", "eq", "twitter")|list|first %}
+{% set other = snss|selectattr("platform", "eq", "other1")|list|first %}
+{% set another = snss|selectattr("platform", "eq", "other2")|list|first %}
+
+<form class="pt-5"
+      hx-post="{{ url_for('pyduck.auth.sns') }}"
+      hx-swap="none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="p-3 border rounded-2">
+        <div class="pt-2 fs-5 fw-bold">
+            내 SNS
+        </div>
+        <hr>
+        <div class="d-flex align-items-center gap-1 pt-2"
+             x-data="{
+                snsInput: '{{ twitter.link }}',
+                snsSelect: '{{ twitter.public|lower }}',
+                get snsPublic() {
+                    return this.snsInput.length > 0 && this.snsSelect === 'true'
+                }
+            }"
+             @twitter="$dispatch('twitter-changed', { public: snsPublic })">
+            <div class="flex-grow-1">
+                <div class="input-group">
+                    <span class="input-group-text" id="sns-twitter">
+                        <i class="bi bi-twitter"></i>
+                    </span>
+                    <input type="text"
+                           name="sns_twitter"
+                           class="form-control"
+                           placeholder="Twitter 계정 링크"
+                           aria-label="My Twitter account"
+                           aria-describedby="sns-twitter"
+                           x-model="snsInput"
+                           @input="$dispatch('twitter')">
+                </div>
+            </div>
+            <div>
+                <select
+                        class="form-select"
+                        aria-label="Select twitter public or not"
+                        name="sns_twitter_public"
+                        x-model="snsSelect"
+                        @change="$dispatch('twitter')"
+                        required>
+                    <option>공개여부</option>
+                    <option value="true">공개</option>
+                    <option value="false" selected>비공개</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-1 pt-2"
+             x-data="{
+                snsInput: '{{ github.link }}',
+                snsSelect: '{{ github.public|lower }}',
+                get snsPublic() {
+                    return this.snsInput.length > 0 && this.snsSelect === 'true'
+                }
+            }"
+             @github="$dispatch('github-changed', { public: snsPublic })">
+            <div class="flex-grow-1">
+                <div class="input-group">
+                    <span class="input-group-text" id="sns-github">
+                        <i class="bi bi-github"></i>
+                    </span>
+                    <input
+                           x-model="snsInput"
+                           @input="$dispatch('github')"
+                           type="text"
+                           name="sns_github"
+                           class="form-control"
+                           placeholder="GitHub 계정 링크"
+                           aria-label="My Github account"
+                           aria-describedby="sns-github">
+                </div>
+            </div>
+            <div>
+                <select
+                        x-model="snsSelect"
+                        @change="$dispatch('github')"
+                        class="form-select"
+                        aria-label="Select github public or not"
+                        name="sns_github_public"
+                        required>
+                    <option>공개여부</option>
+                    <option value="true">공개</option>
+                    <option value="false" selected>비공개</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-1 pt-2"
+             x-data="{
+                snsInput: '{{ other.link }}',
+                snsSelect: '{{ other.public|lower }}',
+                get snsPublic() {
+                    return this.snsInput.length > 0 && this.snsSelect === 'true'
+                }
+            }"
+             @link="$dispatch('link-changed', { public: snsPublic })">
+            <div class="flex-grow-1">
+                <div class="input-group">
+                    <span class="input-group-text" id="sns-other1">
+                        <i class="bi bi-link-45deg"></i>
+                    </span>
+                    <input x-model="snsInput"
+                           @input="$dispatch('link')"
+                           type="text"
+                           name="sns_other1"
+                           class="form-control"
+                           placeholder="타 SNS 계정 링크"
+                           aria-label="My other SNS account1"
+                           aria-describedby="sns-other1">
+                </div>
+            </div>
+            <div>
+                <select x-model="snsSelect"
+                        @change="$dispatch('link')"
+                        class="form-select"
+                        aria-label="Select other sns account1 public or not"
+                        name="sns_other1_public"
+                        required>
+                    <option>공개여부</option>
+                    <option value="true">공개</option>
+                    <option value="false" selected>비공개</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-1 pt-2"
+             x-data="{
+                snsInput: '{{ another.link }}',
+                snsSelect: '{{ another.public|lower }}',
+            }">
+            <div class="flex-grow-1">
+                <div class="input-group">
+                    <span class="input-group-text" id="sns-other2">
+                        <i class="bi bi-link-45deg"></i>
+                    </span>
+                    <input x-model="snsInput"
+                           type="text"
+                           name="sns_other2"
+                           class="form-control"
+                           placeholder="타 SNS 계정 링크"
+                           aria-label="My other SNS account2"
+                           aria-describedby="sns-other2">
+                </div>
+            </div>
+            <div>
+                <select x-model="snsSelect"
+                        class="form-select"
+                        aria-label="Select other sns account2 public or not"
+                        name="sns_other2_public"
+                        required>
+                    <option>공개여부</option>
+                    <option value="true">공개</option>
+                    <option value="false" selected>비공개</option>
+                </select>
+            </div>
+        </div>
+        <div class="pt-3 text-end">
+            <button class="btn btn-primary rounded-0">
+                SNS 저장하기
+            </button>
+        </div>
+    </div>
+</form>

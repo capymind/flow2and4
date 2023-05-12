@@ -1,0 +1,72 @@
+<form class="pt-5"
+      enctype="multipart/form-data"
+      hx-put="{{ url_for('pyduck.auth.avatar') }}"
+      hx-swap="outerHTML"
+      x-data="{
+                editmode: false,
+                avatar: '{{ avatar.url }}',
+                handleUpload(e) {
+                    if (e.target.files.length === 1) {
+                        let file = e.target.files[0]
+                        this.avatar = URL.createObjectURL(file)
+                    }
+                }
+                    
+            }"
+      @avatar-modified-successfully="avatar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="p-3 border rounded-2">
+        <div class="pt-2 fs-5 fw-bold">
+            내 아바타
+        </div>
+        <hr>
+        <div class="pt-1">
+            <div>
+                <img class="rounded-circle"
+                     :src="avatar"
+                     width="150px"
+                     height="150px"
+                     @load="() => { URL.revokeObjectURL(avatar) }">
+            </div>
+            <div class="pt-2 d-flex justify-content-between">
+                <div>
+                    <button type="button"
+                            class="btn btn-outline-success rounded-0"
+                            @click="editmode=true; $nextTick(() => {$refs.fileInput.click()})">
+                        업로드
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-danger rounded-0"
+                            @click="
+                                            avatar='{{ avatar.url }}';
+                                            editmode=false;
+                                            $nextTick(() => {
+                                                $dispatch('avatar-changed', { content: avatar })
+                                            })"
+                            :disabled="avatar === '{{ avatar.url }}'">
+                        취소
+                    </button>
+                </div>
+                <div>
+                    <button class="btn btn-primary rounded-0"
+                            :disabled="avatar === '{{ avatar.url }}'">
+                        아바타 저장하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <template x-if="editmode">
+        <input class="avatar-file-input"
+               type="file"
+               name="avatar"
+               accept="image/png, image/jpeg"
+               x-ref="fileInput"
+               style="display: none"
+               @change="
+                handleUpload; 
+                $nextTick(() => {
+                    $dispatch('avatar-changed', { content: avatar })
+                })">
+    </template>
+</form>

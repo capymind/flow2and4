@@ -10,6 +10,7 @@ UserAvatarBase
     UserAvatarRead
 UserBackdropBase
     UserBackdropCreate
+    UserBackdropUpdate
     UserBackdropRead
 UserSnsBase
     UserSnsCreate
@@ -57,6 +58,10 @@ class UserAvatarCreate(UserAvatarBase):
     pass
 
 
+class UserAvatarUpdate(UserAvatarBase):
+    id: int
+
+
 class UserAvatarRead(UserAvatarBase):
     id: int
 
@@ -77,6 +82,10 @@ class UserBackdropCreate(UserBackdropBase):
     pass
 
 
+class UserBackdropUpdate(UserBackdropBase):
+    id: int
+
+
 class UserBackdropRead(UserBackdropBase):
     id: int
 
@@ -86,8 +95,8 @@ class UserSnsBase(PyduckSchema):
 
     user_id: int
     platform: str
-    link: str
-    public: bool
+    link: str = ""
+    public: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

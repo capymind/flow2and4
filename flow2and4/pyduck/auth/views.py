@@ -2,9 +2,11 @@
 This is the module for handling requests related to pyduck auth.
 """
 
+import os
 import uuid
 import json
 from pydantic import ValidationError
+from werkzeug.utils import secure_filename
 from flask import (
     Blueprint,
     render_template,
@@ -20,7 +22,10 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flow2and4.pyduck.auth.schemas import (
     UserCreate,
     UserAvatarCreate,
+    UserAvatarUpdate,
     UserBackdropCreate,
+    UserBackdropUpdate,
+    UserSnsCreate,
     UserVerificationEmailCreate,
 )
 from flow2and4.pyduck.auth.service import (
@@ -33,6 +38,12 @@ from flow2and4.pyduck.auth.service import (
     verify_user,
     create_user_backdrop,
     update_about_me,
+    delete_and_create_user_sns,
+    update_user_backdrop,
+    update_user_avatar,
+    get_user_avatar_by_user_id,
+    get_user_backdrop_by_user_id,
+    get_user_sns_by_user_id,
 )
 from flow2and4.pyduck.auth.helpers import send_sign_up_verification_email
 
@@ -43,6 +54,8 @@ bp = Blueprint(
     static_folder="static",
     url_prefix="/auth",
 )
+
+ALLOWED_SNS_PLATFORMS = ["github", "twitter", "other1", "other2"]
 
 
 @bp.route("/sign-up", methods=[HTTPMethod.GET, HTTPMethod.POST])
@@ -78,6 +91,9 @@ def sign_up():
 
         backdrop_in = UserBackdropCreate(user_id=user.id)
         create_user_backdrop(backdrop_in=backdrop_in)
+
+        snss_in = [UserSnsCreate(user_id=user.id, platform=sns) for sns in snss]
+        delete_and_create_user_sns(user_id=user.id, snss_in=snss_in)
 
         verification_in = UserVerificationEmailCreate(
             user_id=user.id, vcode=uuid.uuid4().hex
@@ -167,14 +183,23 @@ def sign_out():
     return redirect(url_for("pyduck.index"))
 
 
-@bp.route("/settings/profile", methods=[HTTPMethod.GET])
+@bp.route("/profile/settings", methods=[HTTPMethod.GET])
 @login_required
 def profile_setting():
     """
     (GET) Show my profile setting page.
     """
 
-    return render_template("auth/profile_setting.html.jinja")
+    backdrop = get_user_backdrop_by_user_id(user_id=current_user.id)
+    avatar = get_user_avatar_by_user_id(user_id=current_user.id)
+    snss = get_user_sns_by_user_id(user_id=current_user.id)
+
+    return render_template(
+        "auth/profile/settings/index.html.jinja",
+        backdrop=backdrop,
+        avatar=avatar,
+        snss=snss,
+    )
 
 
 @bp.route("/me/about_me", methods=[HTTPMethod.POST])
@@ -185,8 +210,158 @@ def about_me():
     """
 
     content = request.form.get("about_me")
-    
+
     # validation needed
     update_about_me(user_id=current_user.id, about_me=content)
 
-    
+    res = make_response()
+    res.headers["HX-Trigger-After-Settle"] = "about-me-modified-successfully"
+
+    return res, HTTPStatus.OK
+
+
+@bp.route("/me/sns", methods=[HTTPMethod.POST])
+@login_required
+def sns():
+    """
+    (POST) Save about sns return relevant event.
+    """
+
+    snss_in, snss = [], []
+    for platform in ALLOWED_SNS_PLATFORMS:
+        link = request.form.get(f"sns_{platform}")
+        _p = request.form.get(f"sns_{platform}_public")
+        public = True if _p == "true" else False
+
+        if link is not None:
+            snss_in.append(
+                UserSnsCreate(
+                    user_id=current_user.id, platform=platform, link=link, public=public
+                )
+            )
+
+    if len(snss_in) > 0:
+        snss = delete_and_create_user_sns(user_id=current_user.id, snss_in=snss_in)
+
+    res = make_response(
+        render_template("auth/profile/settings/sns.html.jinja", snss=snss)
+    )
+    res.headers["HX-Trigger-After-Settle"] = "sns-modified-successfully"
+
+    return res, HTTPStatus.OK
+
+
+@bp.route("/me/backdrop", methods=[HTTPMethod.PUT])
+@login_required
+def backdrop():
+    """
+    (PUT) Modify backdrop and return relevant fragment.
+    """
+
+    ALLOWED_BACKDROP_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+    old_backdrop = get_user_backdrop_by_user_id(user_id=current_user.id)
+    old_filename = old_backdrop.filename
+
+    file = request.files.get("backdrop")
+    static_folder = bp.static_folder
+    subpath = "images/backdrop"
+
+    if file is None:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    fileformat = None
+    try:
+        fileformat = file.filename.rsplit(".", 1)[-1]
+    except:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    if fileformat.lower() not in ALLOWED_BACKDROP_EXTENSIONS:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    original_filename = secure_filename(file.filename)
+
+    filename = f"{uuid.uuid4().hex}.{fileformat}"
+    filepath = os.path.join(static_folder, subpath, filename)
+
+    file.save(filepath)
+    filesize = os.stat(filepath).st_size
+
+    backdrop_in = UserBackdropUpdate(
+        id=old_backdrop.id,
+        user_id=current_user.id,
+        url=url_for("pyduck.auth.static", filename=os.path.join(subpath, filename)),
+        filename=filename,
+        original_filename=original_filename,
+        mimetype=file.mimetype,
+        filesize=filesize,
+    )
+
+    backdrop = update_user_backdrop(backdrop_in=backdrop_in)
+
+    if "default_backdrop" not in old_filename:
+        os.remove(os.path.join(static_folder, subpath, old_filename))
+
+    res = make_response(
+        render_template("auth/profile/settings/backdrop.html.jinja", backdrop=backdrop)
+    )
+    res.headers["HX-Trigger-After-Settle"] = "backdrop-modified-successfully"
+
+    return res, HTTPStatus.OK
+
+
+@bp.route("/me/avatar", methods=[HTTPMethod.PUT])
+@login_required
+def avatar():
+    """
+    (PUT) Modify avatar and return relevant fragment.
+    """
+
+    ALLOWED_AVATAR_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+    old_avatar = get_user_avatar_by_user_id(user_id=current_user.id)
+    old_filename = old_avatar.filename
+
+    file = request.files.get("avatar")
+    static_folder = bp.static_folder
+    subpath = "images/avatar"
+
+    if file is None:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    fileformat = None
+    try:
+        fileformat = file.filename.rsplit(".", 1)[-1]
+    except:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    if fileformat.lower() not in ALLOWED_AVATAR_EXTENSIONS:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    original_filename = secure_filename(file.filename)
+
+    filename = f"{uuid.uuid4().hex}.{fileformat}"
+    filepath = os.path.join(static_folder, subpath, filename)
+
+    file.save(filepath)
+    filesize = os.stat(filepath).st_size
+
+    avatar_in = UserAvatarUpdate(
+        id=old_avatar.id,
+        user_id=current_user.id,
+        url=url_for("pyduck.auth.static", filename=os.path.join(subpath, filename)),
+        filename=filename,
+        original_filename=original_filename,
+        mimetype=file.mimetype,
+        filesize=filesize,
+    )
+
+    avatar = update_user_avatar(avatar_in=avatar_in)
+
+    if "default_avatar" not in old_filename:
+        os.remove(os.path.join(static_folder, subpath, old_filename))
+
+    res = make_response(
+        render_template("auth/profile/settings/avatar.html.jinja", avatar=avatar)
+    )
+    res.headers["HX-Trigger-After-Settle"] = "avatar-modified-successfully"
+
+    return res, HTTPStatus.OK

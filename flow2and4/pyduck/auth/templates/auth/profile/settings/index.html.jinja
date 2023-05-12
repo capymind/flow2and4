@@ -1,0 +1,198 @@
+{% extends "pyduck/base.html.jinja" %}
+
+{% set github = snss|selectattr("platform", "eq", "github")|list|first %}
+{% set twitter = snss|selectattr("platform", "eq", "twitter")|list|first %}
+{% set other = snss|selectattr("platform", "eq", "other1")|list|first %}
+{% set another = snss|selectattr("platform", "eq", "other2")|list|first %}
+
+{% block main %}
+<div class="container">
+    <div class="row pt-5">
+        <div class="col-12 text-center">
+            <div class="display-4">
+                <i class="bi bi-person-vcard"></i>
+            </div>
+            <div>
+                <h1 class="fs-2 fw-bold">내 프로필 관리</h1>
+                <p class="pt-3 text-secondary">
+                    아바타 및 배경 사진, 자기소개 등
+                    <br>프로필을 다양하게 꾸며보세요 :)
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="row py-5">
+        <div class="
+                col-12 order-2
+                col-lg-6 order-lg-1">
+
+            <!-- [START] Backdrop -->
+            {% include "auth/profile/settings/backdrop.html.jinja" %}
+            <!-- Backdrop [END] -->
+
+            <!-- [START] Avatar -->
+            {% include "auth/profile/settings/avatar.html.jinja" %}
+            <!-- Avatar [END] -->
+
+            <!-- [START] About me -->
+            {% include "auth/profile/settings/about_me.html.jinja" %}
+            <!-- About me [END] -->
+
+            <!-- [START] 내 SNS -->
+            {% include "auth/profile/settings/sns.html.jinja" %}
+            <!-- 내 SNS [END] -->
+        </div>
+        <div class="
+                col-12 order-1
+                col-lg-6  order-lg-2">
+            <section
+                     class="pt-5"
+                     x-data="{
+                        backdrop: '{{ backdrop.url }}',
+                        avatar: '{{ avatar.url }}',
+                        aboutMe: '{{ current_user.about_me if current_user.about_me is not none else '' }}',
+                        twitterPublic: {{ twitter.public|lower }},
+                        githubPublic: {{ github.public|lower }},
+                        linkPublic: {{ other.public|lower }}
+                    }"
+                     @about-me-change.document="aboutMe=$event.detail.content"
+                     @twitter-changed.document="twitterPublic=$event.detail.public"
+                     @github-changed.document="githubPublic=$event.detail.public"
+                     @link-changed.document="linkPublic=$event.detail.public"
+                     @backdrop-changed.document="backdrop=$event.detail.content"
+                     @avatar-changed.document="avatar=$event.detail.content">
+                <div class="p-3 border rounded-2">
+                    <h1 class="pt-2 fs-5 fw-bold">
+                        내 프로필 미리보기
+                    </h1>
+                    <hr>
+                    <div class="pt-1">
+                        <small class="text-secondary">
+                            다른 유저가 내 아바타에 마우스를 올리거나(hover),
+                            <br>클릭했을 때 나오는 프로필입니다.
+                        </small>
+                    </div>
+                    <div class="pt-2 d-flex justify-content-center">
+                        <div class="shadow p-1 rounded-2" style="width: 360px;">
+                            <div class="position-relative">
+                                <div>
+                                    <img :src="backdrop"
+                                         class="rounded-top-3"
+                                         style="width: 100%; max-width: 360px; max-height: 120px;">
+                                </div>
+                                <div class="position-absolute"
+                                     style="top:60%; left:20px;">
+                                    <img :src="avatar"
+                                         class="rounded-circle border border-4"
+                                         width="88px" height="88px">
+                                </div>
+                            </div>
+                            <div class="mt-5 p-2 border border-2 rounded-2">
+                                <div class="py-2 d-flex justify-content-between">
+                                    <span class="fs-5 fw-bold">@{{ current_user.nickname }}</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span x-show="twitterPublic"><i class="bi bi-twitter"></i></span>
+                                        <span x-show="githubPublic"><i class="bi bi-github"></i></span>
+                                        <span x-show="linkPublic"><i class="bi bi-link-45deg"></i></span>
+                                    </div>
+                                </div>
+                                <div class="border-top pt-3" x-html="aboutMe"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock main %}
+
+
+{% block toast_manager %}
+<div class="toast-manager fixed-top"
+     x-data="{
+        handleBackdrop() {
+            let toast = bootstrap.Toast.getOrCreateInstance(
+                document.querySelector('#backdropToast')
+            )
+            toast.show()
+        },
+        handleAvatar() {
+            let toast = bootstrap.Toast.getOrCreateInstance(
+                document.querySelector('#avatarToast')
+            )
+            toast.show()
+        },
+        handleSns() {
+            let toast = bootstrap.Toast.getOrCreateInstance(
+                document.querySelector('#snsToast')
+            )
+            toast.show()
+        },
+        handleAboutMe() {
+            let toast = bootstrap.Toast.getOrCreateInstance(
+                document.querySelector('#aboutMeToast')
+            )
+            toast.show()
+        }
+    }"
+     @backdrop-modified-successfully.document="handleBackdrop"
+     @avatar-modified-successfully.document="handleAvatar"
+     @sns-modified-successfully.document="handleSns"
+     @about-me-modified-successfully.document="handleAboutMe">
+    <div class="toast-container p-3 top-0 end-0">
+        <div id="backdropToast" class="toast text-bg-success" role="alert" aria-live="assertive"
+             aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-lightbulb"></i>
+                <strong class="me-auto ps-1">알림</strong>
+                <small>방금 전</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                멋진 배경 사진이 잘 저장되었습니다!
+            </div>
+        </div>
+        <div id="avatarToast" class="toast text-bg-success" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-lightbulb"></i>
+                <strong class="me-auto ps-1">알림</strong>
+                <small>방금 전</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                멋진 아바타 사진이 잘 저장되었습니다!
+            </div>
+        </div>
+        <div id="snsToast" class="toast text-bg-success" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-lightbulb"></i>
+                <strong class="me-auto ps-1">알림</strong>
+                <small>방금 전</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                SNS 계정 정보가 성공적으로 반영되었습니다!
+            </div>
+        </div>
+        <div id="aboutMeToast" class="toast text-bg-success" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-lightbulb"></i>
+                <strong class="me-auto ps-1">알림</strong>
+                <small>방금 전</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                자기소개가 성공적으로 반영되었습니다!
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock toast_manager %}
+
+{% block javascript %}
+{{ super() }}
+<script>
+
+</script>
+{% endblock javascript %}

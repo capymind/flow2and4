@@ -2,7 +2,7 @@
 This is module for defining ORMs and tables related to auth.
 
 [models]
-PyduckUserAvatar
+UserAvatar
 UserBackdrop
 UserSns
 User
@@ -15,11 +15,10 @@ from flow2and4.database import db
 from flow2and4.pyduck.models import ImageUploadMixin
 
 
-class PyduckUserAvatar(ImageUploadMixin, db.Model):
+class UserAvatar(ImageUploadMixin, db.Model):
     """Represent user avatar."""
 
     __bind_key__ = "pyduck"
-    __tablename__ = "user_avatar"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True)
@@ -66,7 +65,9 @@ class User(db.Model):
     deleted_at: Mapped[str | None]
 
     # relationship
-    avatar: Mapped[PyduckUserAvatar] = relationship(cascade="all, delete-orphan")
+    avatar: Mapped[UserAvatar] = relationship(
+        "pyduck.auth.models.UserAvatar", cascade="all, delete-orphan"
+    )
     backdrop: Mapped[UserBackdrop] = relationship(
         "pyduck.auth.models.UserBackdrop", cascade="all, delete-orphan"
     )

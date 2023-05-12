@@ -16,10 +16,11 @@ from flask import (
 )
 from flask_bcrypt import generate_password_hash, check_password_hash
 from http import HTTPStatus, HTTPMethod
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from flow2and4.pyduck.auth.schemas import (
     UserCreate,
     UserAvatarCreate,
+    UserBackdropCreate,
     UserVerificationEmailCreate,
 )
 from flow2and4.pyduck.auth.service import (
@@ -30,6 +31,8 @@ from flow2and4.pyduck.auth.service import (
     create_user_verification_email,
     get_user_verification_email,
     verify_user,
+    create_user_backdrop,
+    update_about_me,
 )
 from flow2and4.pyduck.auth.helpers import send_sign_up_verification_email
 
@@ -72,6 +75,9 @@ def sign_up():
 
         avatar_in = UserAvatarCreate(user_id=user.id)
         create_user_avatar(avatar_in=avatar_in)
+
+        backdrop_in = UserBackdropCreate(user_id=user.id)
+        create_user_backdrop(backdrop_in=backdrop_in)
 
         verification_in = UserVerificationEmailCreate(
             user_id=user.id, vcode=uuid.uuid4().hex
@@ -168,5 +174,19 @@ def profile_setting():
     (GET) Show my profile setting page.
     """
 
-
     return render_template("auth/profile_setting.html.jinja")
+
+
+@bp.route("/me/about_me", methods=[HTTPMethod.POST])
+@login_required
+def about_me():
+    """
+    (POST) Save about me and return relevant event.
+    """
+
+    content = request.form.get("about_me")
+    
+    # validation needed
+    update_about_me(user_id=current_user.id, about_me=content)
+
+    

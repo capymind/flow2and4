@@ -1,5 +1,12 @@
 """
 This is module for defining ORMs and tables related to auth.
+
+[models]
+PyduckUserAvatar
+UserBackdrop
+UserSns
+User
+UserVerificationEmail
 """
 from __future__ import annotations
 from sqlalchemy import ForeignKey
@@ -15,7 +22,30 @@ class PyduckUserAvatar(ImageUploadMixin, db.Model):
     __tablename__ = "user_avatar"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
+    user_id = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True)
+    created_at: Mapped[str]
+
+
+class UserBackdrop(ImageUploadMixin, db.Model):
+    """Represent user backdrop."""
+
+    __bind_key__ = "pyduck"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True)
+    created_at: Mapped[str]
+
+
+class UserSns(db.Model):
+    """Represent user sns."""
+
+    __bind_key__ = "pyduck"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+    platform: Mapped[str]
+    link: Mapped[str]
+    public: Mapped[bool]
     created_at: Mapped[str]
 
 
@@ -31,11 +61,18 @@ class User(db.Model):
     active: Mapped[bool]
     verified: Mapped[bool]
     role: Mapped[str]
+    about_me: Mapped[str | None]
     created_at: Mapped[str]
     deleted_at: Mapped[str | None]
 
     # relationship
-    avatar: Mapped[PyduckUserAvatar] = relationship()
+    avatar: Mapped[PyduckUserAvatar] = relationship(cascade="all, delete-orphan")
+    backdrop: Mapped[UserBackdrop] = relationship(
+        "pyduck.auth.models.UserBackdrop", cascade="all, delete-orphan"
+    )
+    sns: Mapped[list[UserSns]] = relationship(
+        "pyduck.auth.models.UserSns", cascade="all, delete-orphan"
+    )
 
 
 class UserVerificationEmail(db.Model):
@@ -44,7 +81,7 @@ class UserVerificationEmail(db.Model):
     __bind_key__ = "pyduck"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
+    user_id = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True)
     vcode: Mapped[str]
     created_at: Mapped[str]
 

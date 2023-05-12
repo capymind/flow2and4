@@ -12,12 +12,12 @@ from flask import (
     redirect,
 )
 from http import HTTPStatus, HTTPMethod
-from flow2and4.auth.schemas import (
+from flow2and4.csduck.auth.schemas import (
     UserCreate,
     UserEmailVerificationCreate,
     UserAvatarCreate,
 )
-from flow2and4.auth.service import (
+from flow2and4.csduck.auth.service import (
     is_duplicate,
     create_user,
     create_user_email_verification,

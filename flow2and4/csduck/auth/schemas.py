@@ -1,7 +1,13 @@
 """
-This is the module for defining schemas related to auth.
+This is the module for defining schemas related to pyduck auth.
 
 [schemas]
+UserAvatarBase
+    UserAvatarCreate
+    UserAvatarRead
+UserBackdropBase
+    UserBackdropCreate
+    UserBackdropRead
 UserBase
     UserCreate
     UserRead
@@ -9,9 +15,6 @@ UserBase
 UserEmailVerificationBase
     UserEmailVerificationCreate
     UserEmailVerificationRead
-UserAvatarBase
-    UserAvatarCreate
-    UserAvatarRead
 """
 
 from datetime import datetime, timezone
@@ -23,7 +26,7 @@ class UserAvatarBase(BaseSchema):
     """Represent user avatar base."""
 
     user_id: int
-    url: str = "/auth/static/images/avatars/default_avatar.jpg"  # HACK: hard-coded
+    url: str = "/auth/static/images/avatar/default_avatar.jpg"  # HACK: hard-coded
     filename: str = "default_avatar.jpg"
     original_filename: str = "default_avatar.jpg"
     filesize: int = 54
@@ -37,6 +40,27 @@ class UserAvatarCreate(UserAvatarBase):
 
 
 class UserAvatarRead(UserAvatarBase):
+    id: int
+
+
+class UserBackdropBase(BaseSchema):
+    """Represent user backdrop base."""
+
+    user_id: int
+    url: str = "/auth/static/images/backdrop/default_backdrop.jpg"  # HACK: hard-coded
+    filename: str = "default_backdrop.jpg"
+    original_filename: str = "default_backdrop.jpg"
+    filesize: int = 118
+    mimetype: str = "image/jpeg"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime | None
+
+
+class UserBackdropCreate(UserBackdropBase):
+    pass
+
+
+class UserBackdropRead(UserBackdropBase):
     id: int
 
 

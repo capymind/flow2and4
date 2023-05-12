@@ -13,8 +13,8 @@ get_user_for_session
 """
 
 from sqlalchemy import select
-from flow2and4.auth.models import User, UserEmailVerification, UserAvatar
-from flow2and4.auth.schemas import (
+from flow2and4.csduck.auth.models import User, UserEmailVerification, UserAvatar
+from flow2and4.csduck.auth.schemas import (
     UserCreate,
     UserRead,
     UserReadForSession,

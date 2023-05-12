@@ -18,26 +18,46 @@
                     </a>
                 </div>
             </div>
-            <div>
-                {% if current_user.is_authenticated %}
+            {% if current_user.is_authenticated %}
+            <div class="d-flex align-items-center gap-2">
                 <div class="btn-group">
-                    <button class="btn btn-outline-secondary border-0 rounded-circle dropdown-toggle no-caret p-2"
+                    <button
+                            class="btn btn-outline-secondary border-0 rounded-circle dropdown-toggle no-caret"
+                            style="padding-inline:10px;"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="true"
+                            aria-expanded="false"
+                            data-bs-offset="0,5">
+                        <span class="fs-5">
+                            <i class="bi bi-bell"></i>
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end pt-0">
+                        <li></li>
+                    </ul>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary border-0 rounded-circle dropdown-toggle no-caret p-1"
                             type="button"
                             data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false"
                             data-bs-offset="0,5">
                         <img class="rounded-circle" src="{{ current_user.avatar.url }}"
-                             width="32" height="32">
+                             width="34" height="34">
                     </button>
                     <ul class="dropdown-menu dropdown-menu-start dropdown-menu-lg-end pt-0"
                         style="width:var(--size-14)">
-                        <li class="bg-success-subtle rounded-top-2 py-2 px-2 border-bottom">
+                        <li
+                            class="rounded-top-2 pt-4 pb-2 px-2 border-bottom"
+                            style="background-image:url('{{ current_user.backdrop.url }}')">
                             <div class="d-flex align-items-center">
                                 <div>
                                     <img class="rounded-circle"
                                          src="{{ current_user.avatar.url }}" width="50"
                                          height="50">
                                 </div>
-                                <div class="ps-3">
+                                <div class="ps-3"
+                                     style="filter:invert() contrast(999) grayscale();">
                                     <div class="fw-bold">{{current_user.nickname}} </div>
                                     <div><small>{{ current_user.username }}</small></div>
                                 </div>
@@ -73,14 +93,16 @@
                         </li>
                     </ul>
                 </div>
-                {% else %}
+            </div>
+            {% else %}
+            <div class="d-flex align-items-center gap-1">
                 <button class="btn btn-outline-secondary rounded-0" data-bs-toggle="modal"
                         data-bs-target="#modal" x-data @click="$dispatch('modalsignup')">회원가입</button>
                 <button class="btn btn-outline-dark rounded-0 btn__signin" data-bs-toggle="modal"
                         data-bs-target="#modal"
                         x-data @click="$dispatch('modalsignin')">로그인</button>
-                {% endif %}
             </div>
+            {% endif %}
         </div>
 
         <!-- [START] offcanvas sidebar -->

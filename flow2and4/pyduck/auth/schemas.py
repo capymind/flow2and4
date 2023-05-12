@@ -1,5 +1,23 @@
 """
 This is the module for defining schemas related to pyduck auth.
+
+[schemas]
+UserVerificationEmailBase
+    UserVerificationEmailCreate
+    UserVerificationEmailRead
+UserAvatarBase
+    UserAvatarCrete
+    UserAvatarRead
+UserBackdropBase
+    UserBackdropCreate
+    UserBackdropRead
+UserSnsBase
+    UserSnsCreate
+    UserSnsRead
+UserBase
+    UserRead
+        UserReadForSession
+    UserCreate
 """
 
 from pydantic import Field
@@ -43,6 +61,44 @@ class UserAvatarRead(UserAvatarBase):
     id: int
 
 
+class UserBackdropBase(PyduckSchema):
+    """Represent user backdrop base."""
+
+    user_id: int
+    url: str = "/auth/static/images/backdrop/default_backdrop.jpg"
+    filename: str = "default_backdrop.jpg"
+    original_filename: str = "default_backdrop.jpg"
+    mimetype: str | None
+    filesize: int | None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserBackdropCreate(UserBackdropBase):
+    pass
+
+
+class UserBackdropRead(UserBackdropBase):
+    id: int
+
+
+class UserSnsBase(PyduckSchema):
+    """Represent user sns base."""
+
+    user_id: int
+    platform: str
+    link: str
+    public: bool
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserSnsCreate(UserSnsBase):
+    pass
+
+
+class UserSnsRead(UserSnsBase):
+    id: int
+
+
 class UserBase(PyduckSchema):
     """Represent user."""
 
@@ -52,6 +108,7 @@ class UserBase(PyduckSchema):
     active: bool = True
     verified: bool = False
     role: str = "user"
+    about_me: str | None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     deleted_at: datetime | None
 
@@ -65,6 +122,8 @@ class UserRead(UserBase):
 
     # relationship
     avatar: UserAvatarRead | None
+    backdrop: UserBackdropRead | None
+    sns: list[UserSnsRead | None]
 
 
 class UserReadForSession(UserRead):

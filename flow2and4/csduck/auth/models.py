@@ -1,5 +1,11 @@
 """
 This is the model for defining ORMs and tables related to auth.
+
+[models]
+User
+UserAvatar
+UserBackdrop
+UserEmailVerification
 """
 
 from sqlalchemy import ForeignKey
@@ -27,6 +33,15 @@ class User(db.Model):
 
 class UserAvatar(ImageUploadMixin, db.Model):
     """Represent user avatar."""
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id = mapped_column(ForeignKey("user.id"))
+    created_at: Mapped[str]
+    updated_at: Mapped[str | None]
+
+
+class UserBackdrop(ImageUploadMixin, db.Model):
+    """Represent user backdrop."""
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id = mapped_column(ForeignKey("user.id"))

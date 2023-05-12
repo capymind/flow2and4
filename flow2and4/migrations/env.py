@@ -40,7 +40,7 @@ def get_engine_url(bind_key=None):
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from flow2and4.models import *
-from flow2and4.auth.models import *
+from flow2and4.csduck.auth.models import *
 
 from flow2and4.pyduck.auth.models import *
 from flow2and4.pyduck.community.models import * 

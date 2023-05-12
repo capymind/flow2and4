@@ -4,7 +4,12 @@ This is the module for handling database transactions related to pyduck auth.
 
 from sqlalchemy import select
 from flow2and4.database import db
-from flow2and4.pyduck.auth.models import User, PyduckUserAvatar, UserVerificationEmail
+from flow2and4.pyduck.auth.models import (
+    User,
+    PyduckUserAvatar,
+    UserBackdrop,
+    UserVerificationEmail,
+)
 from flow2and4.pyduck.auth.schemas import (
     UserCreate,
     UserRead,
@@ -13,6 +18,8 @@ from flow2and4.pyduck.auth.schemas import (
     UserAvatarRead,
     UserVerificationEmailCreate,
     UserVerificationEmailRead,
+    UserBackdropCreate,
+    UserBackdropRead,
 )
 
 
@@ -62,6 +69,16 @@ def create_user_avatar(*, avatar_in: UserAvatarCreate) -> UserAvatarRead:
     return UserAvatarRead.from_orm(avatar)
 
 
+def create_user_backdrop(*, backdrop_in: UserBackdropCreate) -> UserBackdropRead:
+    """Insert user backdrop in table."""
+
+    backdrop = UserBackdrop(**backdrop_in.dict())
+    db.session.add(backdrop)
+    db.session.commit()
+
+    return UserBackdropRead.from_orm(backdrop)
+
+
 def create_user_verification_email(
     *, verification_in: UserVerificationEmailCreate
 ) -> UserVerificationEmailRead:
@@ -97,3 +114,11 @@ def verify_user(*, user_id: int) -> UserRead:
     db.session.commit()
 
     return UserRead.from_orm(user)
+
+
+def update_about_me(*, user_id: int, about_me: str):
+    """Update user's about_me."""
+
+    user = _get_user(user_id)
+    setattr(user, "about_me", about_me)
+    db.session.commit()

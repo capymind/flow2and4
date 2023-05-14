@@ -4,7 +4,7 @@ This is the module for handling requests related to pyduck.
 
 from http import HTTPMethod, HTTPStatus
 from flask import Blueprint, render_template, g
-from flow2and4.pyduck.auth.views import bp as bp_auth
+from flow2and4.pyduck.auth.views import bp as bp_auth, bp_user
 from flow2and4.pyduck.community.views import bp as bp_community
 
 bp = Blueprint(
@@ -15,6 +15,7 @@ bp = Blueprint(
     url_prefix="/",
 )
 bp.register_blueprint(bp_auth)
+bp.register_blueprint(bp_user)
 bp.register_blueprint(bp_community)
 
 

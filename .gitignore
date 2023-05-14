@@ -7,6 +7,13 @@ docker/certbot/conf/*
 
 **/community/static/upload/
 
+**/images/avatar/*.jpg
+!default_avatar.jpg
+
+**/images/backdrop/*.jpg
+!default_backdrop.jpg
+
+
 # csduck [END]
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,flask,linux,windows,visualstudiocode

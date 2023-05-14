@@ -79,7 +79,7 @@
                         </li>
                         <li>
                             <a class="dropdown-item d-flex align-items-center"
-                               href="{{ url_for('pyduck.auth.profile_setting') }}">
+                               href="{{ url_for('pyduck.user.activity', user_id=current_user.id) }}">
                                 <div class="ps-3 fs-4 fw-bold">
                                     <i class="bi bi-database-fill-up"></i>
                                 </div>

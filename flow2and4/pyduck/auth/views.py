@@ -55,6 +55,14 @@ bp = Blueprint(
     url_prefix="/auth",
 )
 
+bp_user = Blueprint(
+    "user",
+    __name__,
+    template_folder="templates",
+    static_folder="static",
+    url_prefix="/users",
+)
+
 ALLOWED_SNS_PLATFORMS = ["github", "twitter", "other1", "other2"]
 
 
@@ -92,7 +100,10 @@ def sign_up():
         backdrop_in = UserBackdropCreate(user_id=user.id)
         create_user_backdrop(backdrop_in=backdrop_in)
 
-        snss_in = [UserSnsCreate(user_id=user.id, platform=sns) for sns in snss]
+        snss_in = [
+            UserSnsCreate(user_id=user.id, platform=sns)
+            for sns in ALLOWED_SNS_PLATFORMS
+        ]
         delete_and_create_user_sns(user_id=user.id, snss_in=snss_in)
 
         verification_in = UserVerificationEmailCreate(
@@ -365,3 +376,29 @@ def avatar():
     res.headers["HX-Trigger-After-Settle"] = "avatar-modified-successfully"
 
     return res, HTTPStatus.OK
+
+
+@bp_user.route("/<int:user_id>/activity", methods=[HTTPMethod.GET])
+def activity(user_id: int):
+    """
+    (GET) Show activity main page.
+    """
+
+    return render_template("/user/activity/index.html.jinja")
+
+
+@bp_user.route("/<int:user_id>/activity/reactions", methods=[HTTPMethod.GET])
+def activity_reaction(user_id: int):
+    """
+    (GET) Show activity about reactions page.
+    """
+
+
+
+@bp_user.route("/<int:user_id>/activity/votes", methods=[HTTPMethod.GET])
+def activity_vote(user_id: int):
+    """
+    (GET) Show activity about votes page.
+    """
+
+    

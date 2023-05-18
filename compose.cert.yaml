@@ -15,24 +15,6 @@ services:
     volumes:
       - ./docker/certbot/conf:/etc/letsencrypt
       - ./docker/certbot/www:/var/www/certbot
-    command:
-      [
-        "certonly",
-        "--reinstall",
-        "--webroot",
-        "--webroot-path=/var/www/certbot",
-        "--email",
-        "flow2kudo@naver.com",
-        "--agree-tos",
-        "--no-eff-email",
-        "-d",
-        "csduck.flow2and4.me",
-        "-d",
-        "pyduck.flow2and4.me",
-        "-d",
-        "faduck.flow2and4.me",
-        "-d",
-        "flow2and4.me"
-      ]
+    command: certonly --reinstall --webroot --webroot-path=/var/www/certbot --email flow2kudo@naver.com --agree-tos --no-eff-email -d faduck.flow2and4.me # multiple `-d` flag not working. so... I manually updated 1 domain 3 subdomains !!
     depends_on:
       - nginx

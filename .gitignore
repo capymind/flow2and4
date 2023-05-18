@@ -8,9 +8,11 @@ docker/certbot/conf/*
 **/community/static/upload/
 
 **/images/avatar/*.jpg
-!default_avatar.jpg
-
+**/images/avatar/*.png
+**/images/backdrop/*.png
 **/images/backdrop/*.jpg
+
+!default_avatar.jpg
 !default_backdrop.jpg
 
 

@@ -26,7 +26,13 @@ services:
         "--agree-tos",
         "--no-eff-email",
         "-d",
+        "csduck.flow2and4.me",
+        "-d",
+        "pyduck.flow2and4.me",
+        "-d",
         "faduck.flow2and4.me",
+        "-d",
+        "flow2and4.me"
       ]
     depends_on:
       - nginx

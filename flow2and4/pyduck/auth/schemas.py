@@ -19,10 +19,45 @@ UserBase
     UserRead
         UserReadForSession
     UserCreate
+UserActionBase
+    UserActionVoteBase
+        UserActionVotePostBase
+            UserActionVotePostCreate
+            UserActionVotePostRead
+        UserActionVotePostCommentBase
+            UserActionVotePostCommentCreate
+            UserActionVotePostComentRead
+        UserActionVoteQuestionBase
+            UserActionVoteQuestionCreate
+            UserActionVoteQuestionRead
+        UserActionVoteAnswerBase
+            UserActionVoteAnswerCreate
+            UserActionVoteAnswerRead
+        UserActionVoteAnswerCommentBase
+            UserActionVoteAnswerCommentCreate
+            UserActionVoteAnswerCommentRead        
+    UserActionReactionBase
+        UserActionReactionPostBase
+            UserActionReactionPostCreate
+            UserActionReactionPostRead
+        UserActionReactionPostCommentBase
+            UserActionReactionPostCommentCreate
+            UserActionReactionPostComentRead
+        UserActionReactionQuestionBase
+            UserActionReactionQuestionCreate
+            UserActionReactionQuestionRead
+        UserActionReactionAnswerBase
+            UserActionReactionAnswerCreate
+            UserActionReactionAnswerRead
+        UserActionReactionAnswerCommentBase
+            UserActionReactionAnswerCommentCreate
+            UserActionReactionAnswerCommentRead
 """
 
-from pydantic import Field
 from datetime import datetime, timezone
+
+from pydantic import Field
+
 from flow2and4.pyduck.schemas import PyduckSchema
 
 
@@ -152,3 +187,221 @@ class UserReadForSession(UserRead):
 
     def get_id(self):
         return str(self.id)
+
+
+class UserActionBase(PyduckSchema):
+    """Represent base schema for user action."""
+
+    user_id: int
+    action_type: str
+    action_value: str | None
+    target_id: int | None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserActionCreatePostBase(UserActionBase):
+    """Represent base schema for user action that user create a post."""
+
+    action_type: str = "create_post"
+
+
+class UserActionCreatePostCreate(UserActionCreatePostBase):
+    pass
+
+
+class UserActionCreatePostRead(UserActionCreatePostBase):
+    id: int
+
+
+class UserActionCreatePostCommentBase(UserActionBase):
+    """Represent base schema for user action that user create a comment in a post."""
+
+    action_type: str = "create_post_comment"
+
+
+class UserActionCreatePostCommentCreate(UserActionCreatePostCommentBase):
+    pass
+
+
+class UserActionCreatePostCommentRead(UserActionCreatePostCommentBase):
+    id: int
+
+
+class UserActionCreateQuestionBase(UserActionBase):
+    """Represent base schema for user action that user create a question."""
+
+    action_type: str = "create_question"
+
+
+class UserActionCreateQuestionCreate(UserActionCreateQuestionBase):
+    pass
+
+
+class UserActionCreateQuestionRead(UserActionCreateQuestionBase):
+    id: int
+
+
+class UserActionCreateAnswerBase(UserActionBase):
+    """Represent base schema for user action that user create an answer."""
+
+    action_type: str = "create_answer"
+
+
+class UserActionCreateAnswerCreate(UserActionCreateAnswerBase):
+    pass
+
+
+class UserActionCreateAnswerRead(UserActionCreateAnswerBase):
+    id: int
+
+
+class UserActionCreateAnswerCommentBase(UserActionBase):
+    """Represent base schema for user action that user create a comment to an answer."""
+
+    action_type: str = "create_answer_comment"
+
+
+class UserActionCreateAnswerCommentCreate(UserActionCreateAnswerCommentBase):
+    pass
+
+
+class UserActionCreateAnswerCommentRead(UserActionCreateAnswerCommentBase):
+    id: int
+
+
+class UserActionVoteBase(UserActionBase):
+    """Represent user action that user vote for something."""
+
+    pass
+
+
+class UserActionVotePostBase(UserActionVoteBase):
+    """Represent base schema for user vote that user vote for post."""
+
+    action_type: str = "vote_post"
+
+
+class UserActionVotePostCreate(UserActionVotePostBase):
+    pass
+
+
+class UserActionVotePostRead(UserActionVotePostBase):
+    id: int
+
+
+class UserActionVotePostCommentBase(UserActionVoteBase):
+    """Represent user action that user vote for a comment in a post."""
+
+    action_type: str = "vote_post_comment"
+
+
+class UserActionVotePostCommentCreate(UserActionVotePostCommentBase):
+    pass
+
+
+class UserActionVotePostCommentRead(UserActionVotePostCommentBase):
+    id: int
+
+
+class UserActionVotePostBase(UserActionVoteBase):
+    """Represent user action that user vote for a question."""
+
+    action_type: str = "vote_question"
+
+
+class UserActionVoteQuestionCreate(UserActionVotePostBase):
+    pass
+
+
+class UserActionVoteQuestionRead(UserActionVotePostBase):
+    id: int
+
+
+class UserActionVoteAnswerBase(UserActionBase):
+    """Represent user action that user vote for an answer."""
+
+    action_type: str = "vote_answer"
+
+
+class UserActionVoteAnswerCreate(UserActionVoteAnswerBase):
+    pass
+
+
+class UserActionVoteAnswerRead(UserActionVoteAnswerBase):
+    id: int
+
+
+class UserActionReactionBase(UserActionBase):
+    """Represent the user action that user react to something."""
+
+    pass
+
+
+class UserActionReactionPostBase(UserActionReactionBase):
+    """Represent the user action that user react to a post."""
+
+    action_type: str = "reaction_post"
+
+
+class UserActionReactionPostCreate(UserActionReactionPostBase):
+    pass
+
+
+class UserActionReactionPostRead(UserActionReactionPostBase):
+    id: int
+
+
+class UserActionReactionPostCommentBase(UserActionReactionBase):
+    """Represent the user action that user react to a comment in a post."""
+
+    action_type: str = "reaction_post_comment"
+
+
+class UserActionReactionPostCommentCreate(UserActionReactionPostCommentBase):
+    pass
+
+
+class UserActionReactionPostCommentRead(UserActionReactionPostCommentBase):
+    id: int
+
+
+class UserActionReactionQuestionBase(UserActionReactionBase):
+    """Represent the user action that user react to a question."""
+
+    action_type: str = "reaction_question"
+
+
+class UserActionReactionQuestionCreate(UserActionReactionQuestionBase):
+    pass
+
+
+class UserActionReactionQuestionRead(UserActionReactionQuestionBase):
+    id: int
+
+
+class UserActionReactionAnswerBase(UserActionReactionBase):
+    """Represent the user action that user react to an answer."""
+
+    action_type: str = "reaction_answer"
+
+
+class UserActionReactionAnswerCreate(UserActionReactionAnswerBase):
+    pass
+
+
+class UserActionReactionAnswerBase(UserActionReactionAnswerBase):
+    id: int
+
+
+class UserActionReactionAnswerCommentBase(UserActionReactionBase):
+    """Represent the user action that user react to a comment in an answer."""
+
+    action_type: str = "reaction_answer_comment"
+
+
+class UserActionReactionAnswerCommentCreate(UserActionReactionAnswerCommentBase):
+    pass
+
+
+class UserActionReactionAnswerCommentRead(UserActionReactionAnswerCommentBase):
+    id: int

@@ -2,29 +2,70 @@
 This is the module for handling database transactions related to pyduck auth.
 """
 
+from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy import select
+
 from flow2and4.database import db
 from flow2and4.pyduck.auth.models import (
     User,
+    UserAction,
+    UserActionCreateAnswer,
+    UserActionCreateAnswerComment,
+    UserActionCreatePost,
+    UserActionCreatePostComment,
+    UserActionCreateQuestion,
+    UserActionReactionAnswer,
+    UserActionReactionAnswerComment,
+    UserActionReactionPost,
+    UserActionReactionPostComment,
+    UserActionReactionQuestion,
+    UserActionVote,
+    UserActionVoteAnswer,
+    UserActionVotePost,
+    UserActionVotePostComment,
+    UserActionVoteQuestion,
+    UserAvatar,
     UserBackdrop,
     UserSns,
-    UserAvatar,
     UserVerificationEmail,
 )
 from flow2and4.pyduck.auth.schemas import (
+    UserActionCreateAnswerCommentCreate,
+    UserActionCreateAnswerCreate,
+    UserActionCreatePostCommentCreate,
+    UserActionCreatePostCreate,
+    UserActionCreatePostRead,
+    UserActionCreateQuestionCreate,
+    UserActionReactionAnswerCommentCreate,
+    UserActionReactionAnswerCreate,
+    UserActionReactionPostCommentCreate,
+    UserActionReactionPostCreate,
+    UserActionReactionQuestionCreate,
+    UserActionVoteAnswerCreate,
+    UserActionVotePostCommentCreate,
+    UserActionVotePostCreate,
+    UserActionVotePostRead,
+    UserActionVoteQuestionCreate,
+    UserAvatarCreate,
+    UserAvatarRead,
+    UserAvatarUpdate,
+    UserBackdropCreate,
+    UserBackdropRead,
+    UserBackdropUpdate,
     UserCreate,
     UserRead,
     UserReadForSession,
-    UserAvatarCreate,
-    UserAvatarRead,
-    UserVerificationEmailCreate,
-    UserVerificationEmailRead,
-    UserBackdropCreate,
-    UserBackdropRead,
     UserSnsCreate,
     UserSnsRead,
-    UserAvatarUpdate,
-    UserBackdropUpdate,
+    UserVerificationEmailCreate,
+    UserVerificationEmailRead,
+)
+from flow2and4.pyduck.community.models import (
+    AnswerVote,
+    PostCommentVote,
+    PostVote,
+    QuestionVote,
+    Vote,
 )
 
 
@@ -221,3 +262,163 @@ def update_user_avatar(*, avatar_in: UserAvatarUpdate) -> UserAvatarRead:
 
     db.session.commit()
     return UserAvatarRead.from_orm(avatar)
+
+
+def create_user_action(*, user_action_in):
+    """Insert user action data in table."""
+
+    user_action = None
+    if isinstance(user_action_in, UserActionCreatePostCreate):
+        user_action = UserActionCreatePost(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionVotePostCreate):
+        user_action = UserActionVotePost(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionVotePostCommentCreate):
+        user_action = UserActionVotePostComment(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionVoteQuestionCreate):
+        user_action = UserActionVoteQuestion(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionVoteAnswerCreate):
+        user_action = UserActionVoteAnswer(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionCreateQuestionCreate):
+        user_action = UserActionCreateQuestion(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionCreatePostCommentCreate):
+        user_action = UserActionCreatePostComment(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionCreateAnswerCreate):
+        user_action = UserActionCreateAnswer(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionCreateAnswerCommentCreate):
+        user_action = UserActionCreateAnswerComment(*user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionReactionPostCreate):
+        user_action = UserActionReactionPost(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionReactionPostCommentCreate):
+        user_action = UserActionReactionPostComment(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionReactionQuestionCreate):
+        user_action = UserActionReactionQuestion(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionReactionAnswerCreate):
+        user_action = UserActionReactionAnswer(**user_action_in.dict())
+
+    elif isinstance(user_action_in, UserActionReactionAnswerCommentCreate):
+        user_action = UserActionReactionAnswerComment(**user_action_in.dict())
+
+    if user_action is None:
+        raise Exception("invalid user action type")
+
+    db.session.add(user_action)
+    db.session.commit()
+
+    return user_action
+
+
+def delete_user_action(*, user_id, action_type, target_id, action_value: str = None):
+    """Delete user action data in table."""
+
+    model = None
+    user_action = None
+
+    if action_type == "vote_post":
+        model = UserActionVotePost
+
+    elif action_type == "vote_post_comment":
+        model = UserActionVotePostComment
+
+    elif action_type == "vote_question":
+        model = UserActionVoteQuestion
+
+    elif action_type == "vote_answer":
+        model = UserActionVoteAnswer
+
+    elif action_type == "create_post_comment":
+        model = UserActionCreatePostComment
+
+    elif action_type == "create_question":
+        model = UserActionCreateQuestion
+
+    elif action_type == "create_answer":
+        model = UserActionCreateAnswer
+
+    elif action_type == "create_answer_comment":
+        model = UserActionCreateAnswerComment
+
+    elif action_type == "reaction_post":
+        model = UserActionReactionPost
+
+    elif action_type == "reaction_post_comment":
+        model = UserActionReactionPostComment
+
+    elif action_type == "reaction_question":
+        model = UserActionReactionQuestion
+
+    elif action_type == "reaction_answer":
+        model = UserActionReactionAnswer
+
+    elif action_type == "reaction_answer_comment":
+        model = UserActionReactionAnswerComment
+
+    if model is not None:
+        user_action = db.session.scalars(
+            select(model).filter_by(
+                user_id=user_id, target_id=target_id, action_value=action_value
+            )
+        ).one()
+
+    if user_action is not None:
+        db.session.delete(user_action)
+        db.session.commit()
+
+
+def get_all_user_actions_by_commons_and_action_types(
+    *,
+    page,
+    per_page,
+    max_per_page,
+    filters,
+    sorters,
+    query,
+    periods,
+    action_types: list[str]
+) -> Pagination:
+    """Select all user actions given common parameters.
+
+    TODO
+    : not python... yet
+    : repeat myself...
+    """
+
+    select_ = select(UserAction).where(UserAction.action_type.in_(action_types))
+
+    # Filtering
+    filters = [] if filters is None else filters.split()
+    periods = [] if periods is None else periods.split()
+    filters = filters + periods
+
+    filter_conditions = []
+    for filter_ in filters:
+        field, op, value = filter_.split("-", 2)
+        column = getattr(UserAction, field)
+
+        # Operators
+        if op == "eq":
+            filter_conditions.append(column == value)
+
+    select_ = select_.where(*filter_conditions)
+
+    # Sorting.
+    sorters = [] if sorters is None else sorters.split()
+    sorter_conditions = [UserAction.created_at.desc()]  # default sorting.
+    for sorter_ in sorters:
+        field, direction = sorter_.split("-")
+        column = getattr(UserAction, field)
+        sorter_conditions.append(column.asc() if direction == "asc" else column.desc())
+    select_ = select_.order_by(*sorter_conditions)
+
+    return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)

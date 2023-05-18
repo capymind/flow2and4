@@ -52,13 +52,13 @@
             {{ comment.content }}
         </div>
         <div class="pt-2 d-flex justify-content-between">
-            {{ render_reaction(comment=comment) }}
+            {{ render_reaction(comment) }}
         </div>
     </div>
     <template x-if="editmode">
         <form
               class="answer w-100"
-              hx-put="{{ url_for('pyduck.community.comment_to_answer') }}"
+              hx-put="{{ url_for('pyduck.community.comment_to_answer', answer_id=comment.answer_id) }}"
               hx-swap="outerHTML"
               hx-target="[data-pd-answer='{{ comment.id }}']">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -204,15 +204,19 @@
     <div class="p-3 bg-body-tertiary rounded-2 mt-3">
         {% for post in post_pagination %}
         {% include "community/post/post_list_item.html.jinja" %}
-        <!-- [start] infinite scroll -->
         {% if loop.last and post_pagination.has_next %}
+        {# infinite scroll trigger #}
         <div
-             hx-get="{{ url_for('pyduck.community.posts', page=post_pagination.next_num) }}"
+             hx-get="{{ url_for(
+                'pyduck.community.posts',
+                 category=c.code, 
+                 page=post_pagination.next_num,
+                 **commons.dict(exclude={'page': True})
+             ) }}"
              hx-trigger="revealed"
-             hx-swapp="afterend">
+             hx-swap="afterend">
         </div>
         {% endif %}
-        <!-- infinite scroll [end] -->
         {% endfor %}
     </div>
 </div>

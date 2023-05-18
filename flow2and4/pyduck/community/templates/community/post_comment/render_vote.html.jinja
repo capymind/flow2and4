@@ -1,5 +1,5 @@
-{% macro render_vote(post_comment, voted=false) %}
-{% if voted %}
+{% macro render_vote(post_comment) %}
+{% if post_comment.votes|selectattr("user_id", "eq", current_user.id)|list|length %}
 <form
       hx-delete="{{ url_for('pyduck.community.post_comment_vote', post_comment_id=post_comment.id) }}"
       hx-swap="outerHTML">

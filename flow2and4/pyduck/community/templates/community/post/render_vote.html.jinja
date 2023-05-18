@@ -1,13 +1,16 @@
-{% macro render_vote(post, voted=false) %}
-{% if voted %}
-<form hx-delete="{{ url_for('pyduck.community.post_vote', post_id=post.id) }}" hx-swap="outerHTML">
+{% macro render_vote(post) %}
+{% if post.votes|selectattr("user_id", "eq", current_user.id)|list|length %}
+<form
+      hx-delete="{{ url_for('pyduck.community.post_vote', post_id=post.id) }}"
+      hx-swap="outerHTML">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="btn btn-sm btn-outline-secondary rounded-pill active">
         <i class="bi bi-arrow-up"></i> <span>{{ post.vote_count }}</span>
     </button>
 </form>
 {% else %}
-<form hx-post="{{ url_for('pyduck.community.post_vote', post_id=post.id) }}" hx-swap="outerHTML">
+<form hx-post="{{ url_for('pyduck.community.post_vote', post_id=post.id) }}"
+      hx-swap="outerHTML">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="btn btn-sm btn-outline-secondary rounded-pill">
         <i class="bi bi-arrow-up"></i> <span>{{ post.vote_count }}</span>

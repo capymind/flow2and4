@@ -2,19 +2,28 @@
 This is the module for defining schemas related to pyduck community.
 """
 
-from pydantic import Field
 from datetime import datetime, timezone
-from flow2and4.pyduck.schemas import PyduckSchema
+
+from pydantic import Field
+
 from flow2and4.pyduck.auth.schemas import UserRead
+from flow2and4.pyduck.schemas import PyduckSchema
 
 
-class QuestionReactionBase(PyduckSchema):
-    """Represent question reaction."""
+class ReactionBase(PyduckSchema):
+    """Represent reaction."""
 
     user_id: int
-    question_id: int
+    target: str
+    target_id: int
     code: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class QuestionReactionBase(ReactionBase):
+    """Represent reaction to question."""
+
+    target: str = "question"
 
 
 class QuestionReactionCreate(QuestionReactionBase):
@@ -28,12 +37,87 @@ class QuestionReactionRead(QuestionReactionBase):
     user: UserRead
 
 
-class QuestionVoteBase(PyduckSchema):
-    """Represent question vote."""
+class AnswerReactionBase(ReactionBase):
+    """Represent answer reaction."""
+
+    target: str = "answer"
+
+
+class AnswerReactionCreate(AnswerReactionBase):
+    pass
+
+
+class AnswerReactionRead(AnswerReactionBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class AnswerCommentReactionBase(ReactionBase):
+    """Represent reaction to comment of answer"""
+
+    target: str = "answer_comment"
+
+
+class AnswerCommentReactionCreate(AnswerCommentReactionBase):
+    pass
+
+
+class AnswerCommentReactionRead(AnswerCommentReactionBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class PostReactionBase(ReactionBase):
+    """Represent reaction to post."""
+
+    target: str = "post"
+
+
+class PostReactionCreate(PostReactionBase):
+    pass
+
+
+class PostReactionRead(PostReactionBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class PostCommentReactionBase(ReactionBase):
+    """Represent reaction to comment of post."""
+
+    target: str = "post_comment"
+
+
+class PostCommentReactionCreate(PostCommentReactionBase):
+    pass
+
+
+class PostCommentReactionRead(PostCommentReactionBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class VoteBase(PyduckSchema):
+    """Represent vote."""
 
     user_id: int
-    question_id: int
+    target: str
+    target_id: int
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class QuestionVoteBase(VoteBase):
+    """Represent vote to question."""
+
+    target: str = "question"
 
 
 class QuestionVoteCreate(QuestionVoteBase):
@@ -45,6 +129,56 @@ class QuestionVoteRead(QuestionVoteBase):
 
     # relationship.
     user: UserRead
+
+
+class AnswerVoteBase(VoteBase):
+    """Represent vote to answer."""
+
+    target: str = "answer"
+
+
+class AnswerVoteCreate(AnswerVoteBase):
+    pass
+
+
+class AnswerVoteRead(AnswerVoteBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class PostVoteBase(VoteBase):
+    """Represent vote to post."""
+
+    target: str = "post"
+
+
+class PostVoteCreate(PostVoteBase):
+    pass
+
+
+class PostVoteRead(PostVoteBase):
+    id: int
+
+    # relationship.
+    user: UserRead
+
+
+class PostCommentVoteBase(VoteBase):
+    """Represent vote to post's comment."""
+
+    target: str = "post_comment"
+
+
+class PostCommentVoteCreate(PostCommentVoteBase):
+    pass
+
+
+class PostCommentVoteRead(PostCommentVoteBase):
+    id: int
+
+    # relationship
 
 
 class QuestionHistoryBase(PyduckSchema):
@@ -133,45 +267,6 @@ class QuestionImageUploadRead(QuestionImageUploadBase):
     id: int
 
 
-class AnswerReactionBase(PyduckSchema):
-    """Represent answer reaction."""
-
-    user_id: int
-    answer_id: int
-    code: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class AnswerReactionCreate(AnswerReactionBase):
-    pass
-
-
-class AnswerReactionRead(AnswerReactionBase):
-    id: int
-
-    # relationship.
-    user: UserRead
-
-
-class AnswerVoteBase(PyduckSchema):
-    """Represent question vote."""
-
-    user_id: int
-    answer_id: int
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class AnswerVoteCreate(AnswerVoteBase):
-    pass
-
-
-class AnswerVoteRead(AnswerVoteBase):
-    id: int
-
-    # relationship.
-    user: UserRead
-
-
 class AnswerHistoryBase(PyduckSchema):
     """Represent question history."""
 
@@ -221,26 +316,6 @@ class AnswerRead(AnswerBase):
     reactions: list[AnswerReactionRead | None]
 
 
-class AnswerCommentReactionBase(PyduckSchema):
-    """Represent answer reaction."""
-
-    user_id: int
-    comment_id: int
-    code: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class AnswerCommentReactionCreate(AnswerCommentReactionBase):
-    pass
-
-
-class AnswerCommentReactionRead(AnswerCommentReactionBase):
-    id: int
-
-    # relationship.
-    user: UserRead
-
-
 class AnswerCommentHistoryBase(PyduckSchema):
     """Represent comment history."""
 
@@ -281,47 +356,9 @@ class AnswerCommentRead(AnswerCommentBase):
 
     # relationship.
     user: UserRead
+    answer: AnswerRead
     history: list[AnswerCommentHistoryRead | None]
     reactions: list[AnswerCommentReactionRead | None]
-
-
-class PostReactionBase(PyduckSchema):
-    """Represent post reaction."""
-
-    user_id: int
-    post_id: int
-    code: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class PostReactionCreate(PostReactionBase):
-    pass
-
-
-class PostReactionRead(PostReactionBase):
-    id: int
-
-    # relationship.
-    user: UserRead
-
-
-class PostVoteBase(PyduckSchema):
-    """Represent post vote."""
-
-    user_id: int
-    post_id: int
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class PostVoteCreate(PostVoteBase):
-    pass
-
-
-class PostVoteRead(PostVoteBase):
-    id: int
-
-    # relationship.
-    user: UserRead
 
 
 class PostHistoryBase(PyduckSchema):
@@ -410,26 +447,6 @@ class PostImageUploadRead(PostImageUploadBase):
     id: int
 
 
-class PostCommentReactionBase(PyduckSchema):
-    """Represent answer reaction."""
-
-    user_id: int
-    comment_id: int
-    code: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class PostCommentReactionCreate(PostCommentReactionBase):
-    pass
-
-
-class PostCommentReactionRead(PostCommentReactionBase):
-    id: int
-
-    # relationship.
-    user: UserRead
-
-
 class PostCommentHistoryBase(PyduckSchema):
     """Represent comment history."""
 
@@ -473,24 +490,7 @@ class PostCommentRead(PostCommentBase):
 
     # relationship.
     user: UserRead
-    history: list[AnswerCommentHistoryRead | None]
-    reactions: list[AnswerCommentReactionRead | None]
-
-
-class PostCommentVoteBase(PyduckSchema):
-    """Represent post comment vote."""
-
-    user_id: int
-    comment_id: int
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class PostCommentVoteCreate(PostCommentVoteBase):
-    pass
-
-
-class PostCommentVoteRead(PostCommentVoteBase):
-    id: int
-
-    # relationship.
-    user: UserRead
+    post: PostRead
+    votes: list[PostCommentVoteRead | None]
+    history: list[PostCommentHistoryRead | None]
+    reactions: list[PostCommentReactionRead | None]

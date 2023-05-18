@@ -1,7 +1,7 @@
 {% extends "pyduck/base.html.jinja" %}
 
 
-{% from "community/post/render_vote.html.jinja" import render_vote %}
+{% from "community/post/render_vote.html.jinja" import render_vote with context %}
 {% from "community/post/render_reaction.html.jinja" import render_reaction with context %}
 {% from "community/post_comment/render_post_comment.html.jinja" import render_post_comment with context %}
 
@@ -29,7 +29,7 @@
         <div class="col-12 col-lg-8">
             <div class="p-3 border rounded-2">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                    <div class="d-flex align-items-center gap-1">
                         <img class="rounded-circle" src="{{ post.user.avatar.url }}" width="33" height="33">
                         <span>{{ post.user.nickname }}</span>
                     </div>
@@ -90,7 +90,7 @@
                     {{ post.content }}
                 </div>
                 <div class="pt-4 d-flex gap-2">
-                    {{ render_vote(post=post, voted=voted) }}
+                    {{ render_vote(post=post) }}
                     {{ render_reaction(post=post) }}
                 </div>
             </div>
@@ -168,6 +168,11 @@
         deleteCommentToPostComment: false,
         url: '',
         target: '',
+        resetModalContent() {
+            this.deletePost = false;
+            this.deletePostComment = false;
+            this.deleteCommentToPostComment = false;
+        }
      }"
      @delete-post.document="
         deletePost=true;
@@ -183,7 +188,8 @@
         deleteCommentToPostComment=true;
         target=$event.detail.target;
         url=$event.detail.url; 
-        $nextTick(() => { htmx.process(document.body) })">
+        $nextTick(() => { htmx.process(document.body) })"
+     @hidden-bs-modal.dot.document="resetModalContent">
     <div class="modal-dialog">
         <template x-if="deletePost">
             <div class="modal-content">
@@ -288,6 +294,8 @@
             _selector = `[data-pd-post-comment-editor='${e.detail.id}']`
         } else if (e.detail.target === 'comment_to_post_comment') {
             _selector = `[data-pd-comment-to-post-comment-editor='${e.detail.id}']`
+        } else if (e.detail.target === 'comment_to_comment') {
+            _selector = `[data-pd-comment-to-comment-editor='${e.detail.id}']`
         } else {
             _selector = '#editor'
         }

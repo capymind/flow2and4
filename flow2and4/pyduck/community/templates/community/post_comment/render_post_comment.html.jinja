@@ -8,14 +8,14 @@
         showcomments: false,
     }"
      data-pd-post-comment="{{ post_comment.id }}"
-     @comment-to-post-comment-created="commentmode=false">
+     @comment-to-post-comment-created="commentmode=false; showcomments=true">
     <div class="row mt-3">
         <div class="col-12 col-lg-8">
             <div
                  class="px-3 pt-3 pb-2 border rounded-2"
                  x-show="!editmode">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                    <div class="d-flex align-items-center gap-1">
                         <img class="rounded-circle" src="{{ post_comment.user.avatar.url }}" width="33" height="33">
                         <span>{{ post_comment.user.nickname }}</span>
                     </div>

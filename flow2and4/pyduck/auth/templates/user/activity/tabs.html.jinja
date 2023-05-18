@@ -1,0 +1,37 @@
+<ul class="nav nav-underline nav-fill border-bottom">
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.endpoint == 'pyduck.user.my_activity' }}"
+           href="{{ url_for('pyduck.user.my_activity') }}">
+            <i class="bi bi-database-fill-up"></i>
+            <span>전체</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.endpoint == 'pyduck.user.my_activity_about_question_and_post' }}"
+           href="{{ url_for('pyduck.user.my_activity_about_question_and_post') }}">
+            <i class="bi bi-pencil-square"></i>
+            <span>질문과 게시글</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.endpoint == 'pyduck.user.my_activity_about_answer_and_comment' }}"
+           href="{{ url_for('pyduck.user.my_activity_about_answer_and_comment') }}">
+            <i class="bi bi-chat-right"></i>
+            <span>답변과 댓글</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.endpoint == 'pyduck.user.my_activity_about_voting' }}"
+           href="{{ url_for('pyduck.user.my_activity_about_voting') }}">
+            <i class="bi bi-arrow-up"></i>
+            <span>추천</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if request.endpoint == 'pyduck.user.my_activity_about_reaction' }}"
+           href="{{ url_for('pyduck.user.my_activity_about_reaction') }}">
+            <i class="bi bi-emoji-smile"></i>
+            <span>리액션</span>
+        </a>
+    </li>
+</ul>

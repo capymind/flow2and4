@@ -1,0 +1,311 @@
+{% if item.action_type is eq "create_question" %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="ps-1">
+        [{{ c.emoji }} {{ c.name }}]에 질문을 작성했습니다.
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=item.question.id) }}">
+                {{ item.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "create_post" %}
+{% set c = category|selectattr("code", "eq", item.post.category)|list|first %}
+<div class="list-group-item">
+    <div class="ps-1">
+        [{{ c.emoji }} {{ c.name }}]에 게시글을 작성했습니다.
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.post', category=item.post.category, post_id=item.post.id) }}">
+                {{ item.post.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "create_answer" %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.answer.question.user.avatar.url }}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.answer.question.user.nickname }}</span>님이
+            <br>[{{ c.emoji }} {{ c.name }}]에 작성한 질문에 답변을 달았습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=item.answer.question_id) }}">
+                {{ item.answer.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "create_answer_comment" %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.answer_comment.anwer.user.avatar.url }}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.answer_comment.answer.user.nickname }}</span>님이
+            <br>[{{ c.emoji }} {{ c.name }}]에 작성한 질문에 대한 답변에 댓글을 달았습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=item.answer_comment.answer.question_id) }}">
+                {{ item.answer_comment.answer.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "reaction_question" %}
+{% set r = reaction_master|selectattr("code", "eq", item.action_value)|list|first %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.question.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.question.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 질문에 [{{ r.emoji }} {{ r.name }}] 리액션을 남기셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=item.question.id) }}">
+                {{ item.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "reaction_answer" %}
+{% set r = reaction_master|selectattr("code", "eq", item.action_value)|list|first %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.answer.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.answer.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 답변에 [{{ r.emoji }} {{ r.name }}] 리액션을 남기셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=item.answer.question.id) }}">
+                {{ item.answer.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "reaction_answer_comment" %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+{% set r = reaction_master|selectattr("code", "eq", item.action_value)|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.answer_comment.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.answer_comment.answer.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 답변 댓글에 [{{ r.emoji }} {{ r.name }}] 리액션을 남기셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=item.answer_comment.answer.question.id) }}">
+                {{ item.answer_comment.answer.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "reaction_post" %}
+{% set r = reaction_master|selectattr("code", "eq", item.action_value)|list|first %}
+{% set c = category|selectattr("code", "eq", item.post.category)|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.post.user.avatar.url }}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.post.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 게시글에 [{{ r.emoji }} {{ r.name }}] 리액션을 남기셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.post', category=c.code, post_id=item.post.id) }}">
+                {{ item.post.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "reaction_post_comment" %}
+{% set r = reaction_master|selectattr("code", "eq", item.action_value)|list|first %}
+{% set c = category|selectattr("code", "eq", item.post_comment.post.category)|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.post_comment.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.post_comment.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 게시글 댓글에 [{{ r.emoji }} {{ r.name }}] 리액션을 남기셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.post', category=c.code, post_id=item.post_comment.post_id) }}">
+                {{ item.post_comment.post.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "vote_question" %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.question.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.question.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 질문을 추천하셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=item.question.id) }}">
+                {{ item.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "vote_answer"  %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.answer.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.answer.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 답변을 추천하셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=item.answer.question.id) }}">
+                {{ item.answer.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "vote_post" %}
+{% set c = category|selectattr("code", "eq", item.post.category)|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.post.user.avatar.url }}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.post.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 게시글을 추천하셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.post', category=c.code, post_id=item.post.id) }}">
+                {{ item.post.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif item.action_type is eq "vote_post_comment" %}
+{% set c = category|selectattr("code", "eq", item.post_comment.post.category)|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ item.post_comment.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ item.post_comment.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 게시글에 달린 댓글을 추천하셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.post', category=c.code, post_id=item.post_comment.post.id) }}">
+                {{ item.post_comment.post.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}

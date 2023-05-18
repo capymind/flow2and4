@@ -1,51 +1,78 @@
 """
 This is the module for handling requests related to pyduck auth.
+
+[ route handlers ]
+
+/sign-up                                -> sign_up
+/sign_up/verification                   -> sign_up_verification
+/sign-up/welcome                        -> welcome
+/sign-in                                -> sign_in
+/sign-out                               -> sign_out
+/profile/settings                       -> profile_setting
+/me/about_me                            -> about_me
+/me/sns                                 -> sns
+/me/backdrop                            -> backdrop
+/me/avatar                              -> avatar
+
+/me/activity                            -> my_activity
+/me/activity/questions-and-posts        -> my_activity_about_question_and_post
+/me/activity/answers-and-comments       -> my_activity_about_answer_and_comment
+/me/activity/votes                      -> my_activity_about_voting
+/me/activity/reactions                  -> my_activity_about_reaction
 """
 
+import json
 import os
 import uuid
-import json
-from pydantic import ValidationError
-from werkzeug.utils import secure_filename
+from http import HTTPMethod, HTTPStatus
+
 from flask import (
     Blueprint,
-    render_template,
-    request,
     abort,
     make_response,
     redirect,
+    render_template,
+    request,
     url_for,
 )
-from flask_bcrypt import generate_password_hash, check_password_hash
-from http import HTTPStatus, HTTPMethod
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_bcrypt import check_password_hash, generate_password_hash
+from flask_login import current_user, login_required, login_user, logout_user
+from pydantic import ValidationError
+from werkzeug.utils import secure_filename
+
+from flow2and4.pyduck.auth.helpers import send_sign_up_verification_email
 from flow2and4.pyduck.auth.schemas import (
-    UserCreate,
     UserAvatarCreate,
     UserAvatarUpdate,
     UserBackdropCreate,
     UserBackdropUpdate,
+    UserCreate,
     UserSnsCreate,
     UserVerificationEmailCreate,
 )
 from flow2and4.pyduck.auth.service import (
-    does_field_value_exist,
     create_user,
-    get_user_by_username,
     create_user_avatar,
-    create_user_verification_email,
-    get_user_verification_email,
-    verify_user,
     create_user_backdrop,
-    update_about_me,
+    create_user_verification_email,
     delete_and_create_user_sns,
-    update_user_backdrop,
-    update_user_avatar,
+    does_field_value_exist,
+    get_all_user_actions_by_commons_and_action_types,
     get_user_avatar_by_user_id,
     get_user_backdrop_by_user_id,
+    get_user_by_username,
     get_user_sns_by_user_id,
+    get_user_verification_email,
+    update_about_me,
+    update_user_avatar,
+    update_user_backdrop,
+    verify_user,
 )
-from flow2and4.pyduck.auth.helpers import send_sign_up_verification_email
+from flow2and4.pyduck.community.service import (
+    get_all_reactions_by_commons,
+    get_all_votes_by_commons,
+)
+from flow2and4.pyduck.schemas import CommonParameters
 
 bp = Blueprint(
     "auth",
@@ -378,27 +405,130 @@ def avatar():
     return res, HTTPStatus.OK
 
 
-@bp_user.route("/<int:user_id>/activity", methods=[HTTPMethod.GET])
-def activity(user_id: int):
+@bp_user.route("/me/activity", methods=[HTTPMethod.GET])
+def my_activity():
     """
-    (GET) Show activity main page.
-    """
-
-    return render_template("/user/activity/index.html.jinja")
-
-
-@bp_user.route("/<int:user_id>/activity/reactions", methods=[HTTPMethod.GET])
-def activity_reaction(user_id: int):
-    """
-    (GET) Show activity about reactions page.
+    (GET) Show my activity index page.
     """
 
+    commons = CommonParameters(**request.args.to_dict())
+    commons.filters = f"user_id-eq-{current_user.id}"
+
+    action_types = [
+        "create_post",
+        "create_question",
+        "create_answer",
+        "create_answer_comment",
+        "create_post_comment",
+        "vote_post",
+        "vote_post_comment",
+        "vote_question",
+        "vote_answer",
+        "reaction_post",
+        "reaction_post_comment",
+        "reaction_question",
+        "reaction_answer",
+        "reaction_answer_comment",
+    ]
+    pagination = get_all_user_actions_by_commons_and_action_types(
+        **commons.dict(), action_types=action_types
+    )
+
+    if request.headers.get("Hx-Request") == "true":
+        template = "/user/activity/list.html.jinja"
+    else:
+        template = "/user/activity/index.html.jinja"
+
+    return render_template(template, pagination=pagination, commons=commons)
 
 
-@bp_user.route("/<int:user_id>/activity/votes", methods=[HTTPMethod.GET])
-def activity_vote(user_id: int):
+@bp_user.route("/me/activity/questions-and-posts", methods=[HTTPMethod.GET])
+@login_required
+def my_activity_about_question_and_post():
     """
-    (GET) Show activity about votes page.
+    (GET) Show my activity about questions and posts.
     """
 
-    
+    commons = CommonParameters(**request.args.to_dict())
+    commons.filters = f"user_id-eq-{current_user.id}"
+
+    pagination = get_all_user_actions_by_commons_and_action_types(
+        **commons.dict(), action_types=["create_post", "create_question"]
+    )
+
+    return render_template(
+        "/user/activity/index.html.jinja",
+        pagination=pagination,
+    )
+
+
+@bp_user.route("/me/activity/answers-and-comments", methods=[HTTPMethod.GET])
+@login_required
+def my_activity_about_answer_and_comment():
+    """
+    (GET) Show my activity about answers and comments.
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+    commons.filters = f"user_id-eq-{current_user.id}"
+
+    pagination = get_all_user_actions_by_commons_and_action_types(
+        **commons.dict(),
+        action_types=["create_answer", "create_answer_comment", "create_post_comment"],
+    )
+
+    return render_template(
+        "/user/activity/index.html.jinja", pagination=pagination, commons=commons
+    )
+
+
+@bp_user.route("/me/activity/votes", methods=[HTTPMethod.GET])
+@login_required
+def my_activity_about_voting():
+    """
+    (GET) Show my activity about voting page.
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+    commons.filters = f"user_id-eq-{current_user.id}"
+
+    pagination = get_all_user_actions_by_commons_and_action_types(
+        **commons.dict(),
+        action_types=["vote_post", "vote_post_comment", "vote_question", "vote_answer"],
+    )
+
+    if request.headers.get("Hx-Request") == "true":
+        template = "/user/activity/votes/list.html.jinja"
+    else:
+        template = "/user/activity/votes/index.html.jinja"
+
+    return render_template(template, pagination=pagination, commons=commons)
+
+
+@bp_user.route("/me/activity/reactions", methods=[HTTPMethod.GET])
+@login_required
+def my_activity_about_reaction():
+    """
+    (GET) Show my activity about reaction page.
+    """
+
+    commons = CommonParameters(**request.args.to_dict())
+    commons.filters = f"user_id-eq-{current_user.id}"
+
+    pagination = get_all_user_actions_by_commons_and_action_types(
+        **commons.dict(),
+        action_types=[
+            "reaction_post",
+            "reaction_post_comment",
+            "reaction_question",
+            "reaction_answer",
+            "reaction_answer_comment",
+        ],
+    )
+
+    if request.headers.get("Hx-Request") == "true":
+        template = "/user/activity/reactions/list.html.jinja"
+    else:
+        template = "/user/activity/reactions/index.html.jinja"
+
+    return render_template(template, pagination=pagination, commons=commons)

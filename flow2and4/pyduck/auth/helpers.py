@@ -7,6 +7,7 @@ from email.headerregistry import Address
 from email.message import EmailMessage
 
 from flask import get_template_attribute, url_for
+
 from flow2and4.pyduck.auth.schemas import UserRead, UserVerificationEmailRead
 from flow2and4.pyduck.utils.email import send_message_using_gmail
 

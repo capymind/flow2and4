@@ -44,7 +44,7 @@ from flow2and4.csduck.auth.models import *
 
 from flow2and4.pyduck.auth.models import *
 from flow2and4.pyduck.community.models import * 
-
+from flow2and4.pyduck.notification.models import *
 
 config.set_main_option('sqlalchemy.url', get_engine_url())
 bind_names = []

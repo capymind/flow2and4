@@ -3,50 +3,21 @@
 {% block main %}
 <div class="container">
     <div class="row pt-5">
-        <div class="col-12 text-center">
-            <div class="display-4">
-                <i class="bi bi-database-fill-up"></i>
-            </div>
-            <div>
-                <h1 class="fs-2 fw-bold">내 활동 내역</h1>
-                <p class="pt-3 text-secondary">
-                    pyduck에서 활동해주신 다양한 내역을
-                    <br>한눈에 쉽고 편리하게 파악해보세요 :)
-                </p>
-            </div>
+        <div class="col-12">
+            {% include "user/activity/header.html.jinja" %}
         </div>
     </div>
     <div class="row py-5">
         <div class="col-12">
-            <ul class="nav nav-tabs">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">Active</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Link</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link"
-                       href="{{ url_for('pyduck.user.activity_vote', user_id=current_user.id) }}">
-                        <i class="bi bi-arrow-up"></i>
-                        <span>추천</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link"
-                       href="{{ url_for('pyduck.user.activity_reaction', user_id=current_user.id) }}">
-                        <i class="bi bi-emoji-smile"></i>
-                        <span>리액션</span>
-                    </a>
-                </li>
-            </ul>
+            <!-- [START] action tabs -->
+            {% include "user/activity/tabs.html.jinja" %}
+            <!-- action tabs [END] -->
+        </div>
+        <div class="col-12">
+            <div class="list-group list-group-flush pt-5">
+                {% include "user/activity/list.html.jinja" %}
+            </div>
         </div>
     </div>
 </div>
 {% endblock main %}
-{% block javascript %}
-{{ super() }}
-<script>
-
-</script>
-{% endblock javascript %}

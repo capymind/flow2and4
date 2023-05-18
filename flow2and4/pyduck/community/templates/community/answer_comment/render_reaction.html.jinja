@@ -1,51 +1,8 @@
-{% macro render_reaction(comment) %}
-{% set reaction_master = [
-{
-"code": "thumbs_up",
-"emoji": "👍",
-"name": "굿이요",
-"description": "",
-},
-{
-"code": "thumbs_down",
-"emoji": "👎",
-"name": "댐이요",
-"description": "",
-},
-{
-"code": "heart",
-"emoji": "❤️",
-"name": "좋아요",
-"description": "",
-},
-{
-"code": "tada",
-"emoji": "🎉",
-"name": "축하요",
-"description": "",
-},
-{
-"code": "smile",
-"emoji": "😄",
-"name": "헤헤요",
-"description": "",
-},
-{
-"code": "sweat",
-"emoji": "😅",
-"name": "당황요",
-"description": "",
-},
-{
-"code": "eyes",
-"emoji": "👀",
-"name": "궁금요",
-"description": "",
-},
-] %}
+{% macro render_reaction(answer_comment) %}
+{% from "community/data/reaction.html.jinja" import reaction_master %}
 <div class="d-flex align-items-center gap-2" hx-target="this">
     <form x-data="{ action: '' }"
-          hx-post="{{ url_for('pyduck.community.answer_comment_reaction', comment_id=comment.id) }}"
+          hx-post="{{ url_for('pyduck.community.answer_comment_reaction', answer_comment_id=answer_comment.id) }}"
           hx-swap="outerHTML">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="action" x-model="action">
@@ -58,7 +15,7 @@
             <div class="dropdown-menu p-0">
                 <div class="btn-group" role="group" aira-label="reaction emoji selector">
                     {% for rm in reaction_master %}
-                    {% set r = comment.reactions|selectattr("code", "eq", rm.code)|list %}
+                    {% set r = answer_comment.reactions|selectattr("code", "eq", rm.code)|list %}
                     {% set reacted = r|selectattr('user_id', 'eq', current_user.id)|list %}
                     <button
                             class="btn btn-sm btn-outline-secondary border-0 rounded-1 m-1 {{ 'active' if reacted }}"
@@ -71,12 +28,12 @@
         </div>
     </form>
     <form x-data="{ action: '' }"
-          hx-post="{{ url_for('pyduck.community.answer_comment_reaction', comment_id=comment.id )}}"
+          hx-post="{{ url_for('pyduck.community.answer_comment_reaction', answer_comment_id=answer_comment.id )}}"
           hx-swap="outerHTML">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="action" x-model="action">
         {% for rm in reaction_master %}
-        {% set r = comment.reactions|selectattr("code", "eq", rm.code)|list %}
+        {% set r = answer_comment.reactions|selectattr("code", "eq", rm.code)|list %}
         {% set reacted = r|selectattr('user_id', 'eq', current_user.id)|list %}
         {% if r %}
         <button

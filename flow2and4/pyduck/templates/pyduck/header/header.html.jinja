@@ -79,7 +79,18 @@
                         </li>
                         <li>
                             <a class="dropdown-item d-flex align-items-center"
-                               href="{{ url_for('pyduck.user.activity', user_id=current_user.id) }}">
+                               href="{{ url_for('pyduck.notification.index') }}">
+                                <div class="ps-3 fs-4 fw-bold">
+                                    <i class="bi bi-bell"></i>
+                                </div>
+                                <div class="ps-4">
+                                    <span>내 알림 내역</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center"
+                               href="{{ url_for('pyduck.user.my_activity') }}">
                                 <div class="ps-3 fs-4 fw-bold">
                                     <i class="bi bi-database-fill-up"></i>
                                 </div>

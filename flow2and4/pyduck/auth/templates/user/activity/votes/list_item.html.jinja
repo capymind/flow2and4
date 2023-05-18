@@ -1,0 +1,101 @@
+{% if vote.question is defined %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ vote.question.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ vote.question.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 질문을 추천하셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=vote.question.id) }}">
+                {{ vote.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif vote.answer is defined %}
+{% set c = category|selectattr("code", "eq", "help")|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ vote.answer.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ vote.answer.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 답변을 추천하셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.question', question_id=vote.answer.question.id) }}">
+                {{ vote.answer.question.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif vote.post is defined %}
+{% set c = category|selectattr("code", "eq", vote.post.category)|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ vote.post.user.avatar.url }}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ vote.post.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 게시글을 추천하셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.post', category=c.code, post_id=vote.post.id) }}">
+                {{ vote.post.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% elif vote.post_comment is defined %}
+{% set c = category|selectattr("code", "eq", vote.post_comment.post.category)|list|first %}
+<div class="list-group-item">
+    <div class="d-flex align-items-center gap-1">
+        <div>
+            <img
+                 class="rounded-circle"
+                 src="{{ vote.post_comment.user.avatar.url}}"
+                 width="40"
+                 height=40>
+        </div>
+        <div class="ps-1">
+            <span class="fw-bold text-info-emphasis">@{{ vote.post_comment.user.nickname }}</span>님이 작성하신
+            <br>[{{ c.emoji }} {{ c.name }}] 관련 게시글에 달린 댓글을 추천하셨습니다.
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 pt-3">
+        <div>
+            <a class="fw-bold"
+               href="{{ url_for('pyduck.community.post', category=c.code, post_id=vote.post_comment.post.id) }}">
+                {{ vote.post_comment.post.title }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}

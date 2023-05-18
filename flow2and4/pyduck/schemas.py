@@ -2,7 +2,7 @@
 This is the module for defining schemas related pyduck.
 """
 
-from pydantic import BaseModel, validator, ValidationError, conint
+from pydantic import BaseModel, ValidationError, conint, validator
 
 
 class PyduckSchema(BaseModel):
@@ -21,13 +21,23 @@ class PyduckSchema(BaseModel):
 class CommonParameters(BaseModel):
     """Represent common parameters used for search, query, pagination globally.
 
-    [stolen from]
+    
+    :filters
+        multiple filters are delimited by single whitspace(' ') which can be
+        splited by `filters.split()`
+
+        each filter __MUST__ have follow the form `<field>-<op>-<value>` form
+        `<field>` is the database column(or property) and `<op>` is operator 
+        and `<value>` is the value used to filter `<field>`.
+    
+
+    [stolen and modified from]
     https://github.com/Netflix/dispatch/blob/master/src/dispatch/database/service.py#L427
     """
 
     page: conint(gt=0, lt=2147483647) = 1
-    per_page: conint(gt=0, lt=50) = 10
-    max_per_page: conint(gt=0, lt=100) = 100
+    per_page: conint(gt=0, le=50) = 10
+    max_per_page: conint(gt=0, le=100) = 100
     filters: str | None
     sorters: str | None
     periods: str | None

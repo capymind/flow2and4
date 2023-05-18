@@ -2,83 +2,86 @@
 This is the module for handling database transactions related to pyduck community.
 """
 
+from flask_sqlalchemy.pagination import Pagination
+from sqlalchemy import or_, select
+from sqlalchemy.orm import with_parent
+
 from flow2and4.database import db
-from flow2and4.pyduck.community.schemas import (
-    QuestionImageUploadCreate,
-    QuestionImageUploadRead,
-    QuestionCreate,
-    QuestionRead,
-    QuestionUpdate,
-    QuestionTagCreate,
-    QuestionTagRead,
-    QuestionHistoryCreate,
-    QuestionVoteCreate,
-    QuestionVoteRead,
-    QuestionReactionCreate,
-    QuestionReactionRead,
-    AnswerCreate,
-    AnswerRead,
-    AnswerUpdate,
-    AnswerHistoryCreate,
-    AnswerVoteCreate,
-    AnswerVoteRead,
-    AnswerReactionCreate,
-    AnswerReactionRead,
-    AnswerCommentCreate,
-    AnswerCommentRead,
-    AnswerCommentUpdate,
-    AnswerCommentHistoryCreate,
-    AnswerCommentReactionCreate,
-    AnswerCommentReactionRead,
-    PostCreate,
-    PostRead,
-    PostReactionCreate,
-    PostReactionRead,
-    PostVoteCreate,
-    PostVoteRead,
-    PostCommentCreate,
-    PostCommentRead,
-    PostCommentReactionCreate,
-    PostCommentReactionRead,
-    PostCommentVoteCreate,
-    PostCommentVoteRead,
-    PostCommentHistoryCreate,
-    PostTagCreate,
-    PostTagRead,
-    PostUpdate,
-    PostHistoryCreate,
-    PostCommentUpdate,
-)
+from flow2and4.pyduck.auth.models import User
+from flow2and4.pyduck.community.helpers import date_filters
 from flow2and4.pyduck.community.models import (
-    QuestionImageUpload,
-    Question,
-    QuestionTag,
-    QuestionHistory,
-    QuestionVote,
-    QuestionReaction,
     Answer,
-    AnswerHistory,
-    AnswerVote,
-    AnswerReaction,
     AnswerComment,
     AnswerCommentHistory,
     AnswerCommentReaction,
+    AnswerHistory,
+    AnswerReaction,
+    AnswerVote,
     Post,
     PostComment,
-    PostReaction,
-    PostVote,
-    PostHistory,
+    PostCommentHistory,
     PostCommentReaction,
     PostCommentVote,
-    PostCommentHistory,
+    PostHistory,
     PostImageUpload,
+    PostReaction,
     PostTag,
+    PostVote,
+    Question,
+    QuestionHistory,
+    QuestionImageUpload,
+    QuestionReaction,
+    QuestionTag,
+    QuestionVote,
+    Reaction,
+    Vote
 )
-from flow2and4.pyduck.auth.models import User
-from sqlalchemy import select, or_
-from sqlalchemy.orm import with_parent
-from flask_sqlalchemy.pagination import Pagination
-from flow2and4.pyduck.community.helpers import date_filters
+from flow2and4.pyduck.community.schemas import (
+    AnswerCommentCreate,
+    AnswerCommentHistoryCreate,
+    AnswerCommentReactionCreate,
+    AnswerCommentReactionRead,
+    AnswerCommentRead,
+    AnswerCommentUpdate,
+    AnswerCreate,
+    AnswerHistoryCreate,
+    AnswerReactionCreate,
+    AnswerReactionRead,
+    AnswerRead,
+    AnswerUpdate,
+    AnswerVoteCreate,
+    AnswerVoteRead,
+    PostCommentCreate,
+    PostCommentHistoryCreate,
+    PostCommentReactionCreate,
+    PostCommentReactionRead,
+    PostCommentRead,
+    PostCommentUpdate,
+    PostCommentVoteCreate,
+    PostCommentVoteRead,
+    PostCreate,
+    PostHistoryCreate,
+    PostReactionCreate,
+    PostReactionRead,
+    PostRead,
+    PostTagCreate,
+    PostTagRead,
+    PostUpdate,
+    PostVoteCreate,
+    PostVoteRead,
+    QuestionCreate,
+    QuestionHistoryCreate,
+    QuestionImageUploadCreate,
+    QuestionImageUploadRead,
+    QuestionReactionCreate,
+    QuestionReactionRead,
+    QuestionRead,
+    QuestionTagCreate,
+    QuestionTagRead,
+    QuestionUpdate,
+    QuestionVoteCreate,
+    QuestionVoteRead
+)
 
 
 def create_question_image_upload(
@@ -258,7 +261,7 @@ def get_all_comments_to_post_comment_by_commons(
         column = getattr(PostComment, field)
         _sorters.append(column.asc() if direction == "asc" else column.desc())
 
-    _sorters.append(PostComment.created_at.desc())  # default sorting.
+    _sorters.append(PostComment.created_at.asc())  # default sorting.
     select_ = select_.order_by(*_sorters)
 
     # handle paginating and return.
@@ -346,7 +349,7 @@ def update_post_adding_history(
 def create_question_vote(vote_in: QuestionVoteCreate) -> QuestionRead:
     """Insert question vote in table."""
 
-    question = _get_question(id=vote_in.question_id)
+    question = _get_question(id=vote_in.target_id)
     question.vote_count += 1
 
     vote = QuestionVote(**vote_in.dict())
@@ -359,7 +362,7 @@ def create_question_vote(vote_in: QuestionVoteCreate) -> QuestionRead:
 def create_post_vote(vote_in: PostVoteCreate) -> PostRead:
     """Insert post vote in table."""
 
-    post = _get_post(id=vote_in.post_id)
+    post = _get_post(id=vote_in.target_id)
     post.vote_count += 1
 
     vote = PostVote(**vote_in.dict())
@@ -373,22 +376,22 @@ def get_question_vote(*, question_id: int, user_id: int) -> QuestionVote:
     """Select question vote."""
 
     return db.session.scalars(
-        select(QuestionVote).filter_by(question_id=question_id, user_id=user_id)
+        select(QuestionVote).filter_by(target_id=question_id, user_id=user_id)
     ).one_or_none()
 
 
-def get_post_vote(*, post_id: int, user_id: int) -> PostVote:
+def get_post_vote(*, target_id: int, user_id: int) -> PostVote:
     """Select post vote."""
 
     return db.session.scalars(
-        select(PostVote).filter_by(post_id=post_id, user_id=user_id)
+        select(PostVote).filter_by(target_id=target_id, user_id=user_id)
     ).one_or_none()
 
 
 def delete_question_vote(*, question_id: int, user_id: int) -> QuestionRead:
     """Delete question vote and return relevant question."""
 
-    question = _get_question(id=question_id)
+    question = _get_question(question_id)
     question.vote_count -= 1
 
     vote = get_question_vote(question_id=question_id, user_id=user_id)
@@ -398,13 +401,13 @@ def delete_question_vote(*, question_id: int, user_id: int) -> QuestionRead:
     return QuestionRead.from_orm(question)
 
 
-def delete_post_vote(*, post_id: int, user_id: int) -> PostRead:
+def delete_post_vote(*, target_id: int, user_id: int) -> PostRead:
     """Delete post vote and return relevant question."""
 
-    post = _get_post(post_id)
+    post = _get_post(target_id)
     post.vote_count -= 1
 
-    vote = get_post_vote(post_id=post_id, user_id=user_id)
+    vote = get_post_vote(target_id=target_id, user_id=user_id)
     db.session.delete(vote)
     db.session.commit()
 
@@ -414,7 +417,7 @@ def delete_post_vote(*, post_id: int, user_id: int) -> PostRead:
 def create_question_reaction(*, reaction_in: QuestionReactionCreate) -> QuestionRead:
     """Insert question reaction in table and return relevant question."""
 
-    question = _get_question(id=reaction_in.question_id)
+    question = _get_question(id=reaction_in.target_id)
 
     reaction = QuestionReaction(**reaction_in.dict())
     db.session.add(reaction)
@@ -426,32 +429,20 @@ def create_question_reaction(*, reaction_in: QuestionReactionCreate) -> Question
 def create_post_reaction(*, reaction_in: PostReactionCreate) -> PostRead:
     """Insert post reaction in table and return relevant post."""
 
-    post = _get_post(id=reaction_in.post_id)
-
     reaction = PostReaction(**reaction_in.dict())
     db.session.add(reaction)
     db.session.commit()
 
+    post = _get_post(reaction_in.target_id)
+
     return PostRead.from_orm(post)
-
-
-def get_question_reaction(
-    *, question_id: int, user_id: int, code: str
-) -> QuestionReaction | None:
-    """Select question reaction."""
-
-    return db.session.scalars(
-        select(QuestionReaction).filter_by(
-            question_id=question_id, user_id=user_id, code=code
-        )
-    ).one_or_none()
 
 
 def get_post_reaction(*, post_id: int, user_id: int, code: str) -> PostReaction | None:
     """Select post reaction."""
 
     return db.session.scalars(
-        select(PostReaction).filter_by(post_id=post_id, user_id=user_id, code=code)
+        select(PostReaction).filter_by(target_id=post_id, user_id=user_id, code=code)
     ).one_or_none()
 
 
@@ -462,7 +453,19 @@ def get_post_comment_reaction(
 
     return db.session.scalars(
         select(PostCommentReaction).filter_by(
-            comment_id=post_comment_id, user_id=user_id, code=code
+            target_id=post_comment_id, user_id=user_id, code=code
+        )
+    ).one_or_none()
+
+
+def get_question_reaction(
+    *, question_id: int, user_id: int, code: str
+) -> QuestionReaction | None:
+    """Select question reaction."""
+
+    return db.session.scalars(
+        select(QuestionReaction).filter_by(
+            target_id=question_id, user_id=user_id, code=code
         )
     ).one_or_none()
 
@@ -479,6 +482,7 @@ def delete_question_reaction(
     db.session.commit()
 
     question = get_question(question_id=question_id)
+
     return QuestionRead.from_orm(question)
 
 
@@ -491,19 +495,6 @@ def delete_post_reaction(*, post_id: int, user_id: int, code: str) -> PostRead:
 
     post = get_post(post_id=post_id)
     return PostRead.from_orm(post)
-
-
-def delete_comment_reaction(
-    *, comment_id: int, user_id: int, code: str
-) -> PostCommentRead:
-    """Delete post comment reaction and return relevant post comment."""
-
-    reaction = get_comment_reaction(comment_id=comment_id, user_id=user_id, code=code)
-    db.session.delete(reaction)
-    db.session.commit()
-
-    comment = get_comment(comment_id=comment_id)
-    return PostCommentRead.from_orm(comment)
 
 
 def create_answer(*, answer_in: AnswerCreate) -> AnswerRead:
@@ -546,6 +537,20 @@ def delete_post_comment(*, post_comment_id: int) -> PostRead:
     db.session.commit()
 
     return PostRead.from_orm(post)
+
+
+def delete_answer(*, answer_id: int) -> QuestionRead:
+    """Delete post comment in table and return relevant post."""
+
+    answer = _get_answer(answer_id)
+    db.session.delete(answer)
+
+    question = _get_question(answer.question_id)
+    question.comment_count -= 1
+
+    db.session.commit()
+
+    return QuestionRead.from_orm(question)
 
 
 def create_comment_to_post_comment(
@@ -612,7 +617,7 @@ def delete_comment_to_post_comment(*, comment_id: int) -> None:
 def create_answer_vote(vote_in: AnswerVoteCreate) -> AnswerRead:
     """Insert answer vote and return relevant answer."""
 
-    answer = _get_answer(id=vote_in.answer_id)
+    answer = _get_answer(id=vote_in.target_id)
     answer.vote_count += 1
 
     vote = AnswerVote(**vote_in.dict())
@@ -626,7 +631,7 @@ def get_answer_vote(*, answer_id: int, user_id: int) -> AnswerVote:
     """Select answer vote."""
 
     return db.session.scalars(
-        select(AnswerVote).filter_by(answer_id=answer_id, user_id=user_id)
+        select(AnswerVote).filter_by(target_id=answer_id, user_id=user_id)
     ).one_or_none()
 
 
@@ -646,7 +651,7 @@ def delete_answer_vote(*, answer_id: int, user_id: int) -> AnswerRead:
 def create_answer_reaction(*, reaction_in: AnswerReactionCreate) -> AnswerRead:
     """Insert answer reaction in table and return relevant answer."""
 
-    answer = _get_answer(id=reaction_in.answer_id)
+    answer = _get_answer(id=reaction_in.target_id)
 
     reaction = AnswerReaction(**reaction_in.dict())
     db.session.add(reaction)
@@ -662,7 +667,7 @@ def get_answer_reaction(
 
     return db.session.scalars(
         select(AnswerReaction).filter_by(
-            answer_id=answer_id, user_id=user_id, code=code
+            target_id=answer_id, user_id=user_id, code=code
         )
     ).one_or_none()
 
@@ -828,26 +833,30 @@ def create_answer_comment(*, comment_in: AnswerCommentCreate) -> AnswerCommentRe
     return AnswerCommentRead.from_orm(comment)
 
 
-def _get_comment(id: int) -> AnswerComment | None:
+def _get_answer_comment(id: int) -> AnswerComment | None:
     return db.session.scalars(select(AnswerComment).filter_by(id=id)).one_or_none()
 
 
-def get_comment(*, comment_id: int) -> AnswerCommentRead | None:
+def get_answer_comment(*, answer_comment_id: int) -> AnswerCommentRead | None:
     """Select question."""
 
-    comment = _get_comment(comment_id)
+    answer_comment = _get_answer_comment(answer_comment_id)
 
-    return AnswerCommentRead.from_orm(comment) if comment is not None else None
+    return (
+        AnswerCommentRead.from_orm(answer_comment)
+        if answer_comment is not None
+        else None
+    )
 
 
 def get_answer_comment_reaction(
-    *, comment_id: int, user_id: int, code: str
+    *, answer_comment_id: int, user_id: int, code: str
 ) -> AnswerCommentReaction | None:
     """Select answer comment reaction."""
 
     return db.session.scalars(
         select(AnswerCommentReaction).filter_by(
-            comment_id=comment_id, user_id=user_id, code=code
+            target_id=answer_comment_id, user_id=user_id, code=code
         )
     ).one_or_none()
 
@@ -857,36 +866,36 @@ def create_answer_comment_reaction(
 ) -> AnswerCommentRead:
     """Insert answer comment reaction in table and return relevant comment."""
 
-    comment = _get_comment(id=reaction_in.comment_id)
+    answer_comment = _get_answer_comment(reaction_in.target_id)
 
     reaction = AnswerCommentReaction(**reaction_in.dict())
     db.session.add(reaction)
     db.session.commit()
 
-    return AnswerCommentRead.from_orm(comment)
+    return AnswerCommentRead.from_orm(answer_comment)
 
 
 def delete_answer_comment_reaction(
-    *, comment_id: int, user_id: int, code: str
+    *, answer_comment_id: int, user_id: int, code: str
 ) -> AnswerCommentRead:
     """Delete answer comment reaction and return relevant answer comment."""
 
     reaction = get_answer_comment_reaction(
-        comment_id=comment_id, user_id=user_id, code=code
+        answer_comment_id=answer_comment_id, user_id=user_id, code=code
     )
     db.session.delete(reaction)
     db.session.commit()
 
-    comment = get_comment(comment_id=comment_id)
-    return AnswerCommentRead.from_orm(comment)
+    answer_comment = get_answer_comment(answer_comment_id=answer_comment_id)
+    return AnswerCommentRead.from_orm(answer_comment)
 
 
 def update_answer_comment_adding_history(
-    *, comment_in: AnswerCommentUpdate
+    *, answer_comment: AnswerCommentUpdate
 ) -> AnswerCommentRead:
     """Update comment, insert comment history in table."""
 
-    comment = _get_comment(comment_in.id)
+    comment = _get_answer_comment(answer_comment.id)
 
     history_in = AnswerCommentHistoryCreate(
         comment_id=comment.id, content=comment.content
@@ -894,7 +903,7 @@ def update_answer_comment_adding_history(
     history = AnswerCommentHistory(**history_in.dict())
     db.session.add(history)
 
-    updated_data = comment_in.dict(include={"content", "updated_at"})
+    updated_data = answer_comment.dict(include={"content", "updated_at"})
     for column, value in updated_data.items():
         setattr(comment, column, value)
 
@@ -1106,7 +1115,7 @@ def get_all_posts_by_commons_and_category(
 def create_post_comment_vote(vote_in: PostCommentVoteCreate) -> PostCommentRead:
     """Insert post comment vote and return relevant post comment."""
 
-    post_comment = _get_post_comment(vote_in.comment_id)
+    post_comment = _get_post_comment(vote_in.target_id)
     post_comment.vote_count += 1
 
     vote = PostCommentVote(**vote_in.dict())
@@ -1120,7 +1129,7 @@ def get_post_comment_vote(*, post_comment_id: int, user_id: int) -> PostCommentV
     """Select post_comment vote."""
 
     return db.session.scalars(
-        select(PostCommentVote).filter_by(comment_id=post_comment_id, user_id=user_id)
+        select(PostCommentVote).filter_by(target_id=post_comment_id, user_id=user_id)
     ).one_or_none()
 
 
@@ -1142,7 +1151,7 @@ def create_post_comment_reaction(
 ) -> PostCommentRead:
     """Insert post comment's reaction in table and return relevant post comment."""
 
-    post_comment = _get_post_comment(reaction_in.comment_id)
+    post_comment = _get_post_comment(reaction_in.target_id)
 
     reaction = PostCommentReaction(**reaction_in.dict())
     db.session.add(reaction)
@@ -1164,3 +1173,87 @@ def delete_post_comment_reaction(
 
     post_comment = get_post_comment(post_comment_id=post_comment_id)
     return PostCommentRead.from_orm(post_comment)
+
+
+def get_all_votes_by_commons(
+    *, page, per_page, max_per_page, filters, sorters, query, periods
+) -> Pagination:
+    """Select all votes given common parameters.
+
+    TODO
+    : not pythonic... yet
+    : repeat myself...
+
+    [notes]
+    """
+
+    select_ = select(Vote)
+
+    # Filtering
+    filters = [] if filters is None else filters.split()
+    periods = [] if periods is None else periods.split()
+    filters = filters + periods
+
+    filter_conditions = []
+    for filter_ in filters:
+        field, op, value = filter_.split("-", 2)
+        column = getattr(Vote, field)
+
+        # Operators
+        if op == "eq":
+            filter_conditions.append(column == value)
+
+    select_ = select_.where(*filter_conditions)
+
+    # Sorting.
+    sorters = [] if sorters is None else sorters.split()
+    sorter_conditions = [Vote.created_at.desc()]  # default sorting.
+    for sorter_ in sorters:
+        field, direction = sorter_.split("-")
+        column = getattr(Vote, field)
+        sorter_conditions.append(column.asc() if direction == "asc" else column.desc())
+    select_ = select_.order_by(*sorter_conditions)
+
+    return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)
+
+
+def get_all_reactions_by_commons(
+    *, page, per_page, max_per_page, filters, sorters, query, periods
+) -> Pagination:
+    """Select all reactions given common parameters.
+
+    TODO
+    : not pythonic... yet
+    : repeat myself...
+
+    [notes]
+    """
+
+    select_ = select(Reaction)
+
+    # Filtering
+    filters = [] if filters is None else filters.split()
+    periods = [] if periods is None else periods.split()
+    filters = filters + periods
+
+    filter_conditions = []
+    for filter_ in filters:
+        field, op, value = filter_.split("-", 2)
+        column = getattr(Reaction, field)
+
+        # Operators
+        if op == "eq":
+            filter_conditions.append(column == value)
+
+    select_ = select_.where(*filter_conditions)
+
+    # Sorting.
+    sorters = [] if sorters is None else sorters.split()
+    sorter_conditions = [Reaction.created_at.desc()]  # default sorting.
+    for sorter_ in sorters:
+        field, direction = sorter_.split("-")
+        column = getattr(Reaction, field)
+        sorter_conditions.append(column.asc() if direction == "asc" else column.desc())
+    select_ = select_.order_by(*sorter_conditions)
+
+    return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)

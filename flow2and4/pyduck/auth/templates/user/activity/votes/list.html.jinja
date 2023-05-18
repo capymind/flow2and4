@@ -1,0 +1,20 @@
+{% from "pyduck/data/sidebar.html.jinja" import sidebar_community as category %}
+
+{% for vote in pagination %}
+{% include "user/activity/votes/list_item.html.jinja" %}
+{% if loop.last and pagination.has_next %}
+<!-- [START] infinite scroll trigger -->
+<div
+     hx-get="{{ 
+                url_for(
+                    'pyduck.user.my_activity_about_voting', 
+                    page=pagination.next_num,
+                    **commons.dict(exclude={'page': True})
+                )
+            }}"
+     hx-trigger="revealed"
+     hx-swap="afterend">
+</div>
+<!-- infinite scroll trigger [END] -->
+{% endif %}
+{% endfor %}

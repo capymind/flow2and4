@@ -137,7 +137,7 @@
                     <div class="py-4 px-3 rounded-2 bg-body-tertiary mt-2">
                         <form
                               class="answer"
-                              hx-post="{{ url_for('pyduck.community.comment_to_answer') }}"
+                              hx-post="{{ url_for('pyduck.community.comment_to_answer', answer_id=answer.id) }}"
                               hx-swap="beforeend"
                               hx-target="[data-pd-comments='{{ answer.id }}']">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -160,7 +160,7 @@
             <template x-if="editmode">
                 <form
                       class="answer"
-                      hx-put="{{ url_for('pyduck.community.answer') }}"
+                      hx-put="{{ url_for('pyduck.community.answer', answer_id=answer.id) }}"
                       hx-swap="outerHTML"
                       hx-target="[data-pd-answer='{{ answer.id }}']">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

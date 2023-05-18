@@ -1,14 +1,29 @@
 """
 This is the module for defining ORMs and tables related to pyduck community.
+
+[models]
+
+Vote
+    QuestionVote
+    AnswerReaction
+    PostVote
+    PostCommentVote
+Reaction
+    QuestionReaction
+    AnswerReaction
+    AnswerCommentReaction
+    PostReaction
+    PostCommentReaction
 """
 
 from __future__ import annotations
-from sqlalchemy import ForeignKey, Column, Integer, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from flow2and4.database import db
-from flow2and4.pyduck.models import ImageUploadMixin
-from flow2and4.pyduck.auth.models import User as User
 
+from sqlalchemy import Column, ForeignKey, Index, Integer, UniqueConstraint
+from sqlalchemy.orm import Mapped, foreign, mapped_column, relationship, remote
+
+from flow2and4.database import db
+from flow2and4.pyduck.auth.models import User as User
+from flow2and4.pyduck.models import ImageUploadMixin
 
 assoc_question_tag_table = db.Table(
     "assoc_question_tag",
@@ -20,42 +35,163 @@ assoc_question_tag_table = db.Table(
 
 assoc_post_tag_table = db.Table(
     "assoc_post_tag",
-    Column("post_id", Integer, ForeignKey("post.id", ondelete="CASCADE"), primary_key=True),
-    Column("tag_id", Integer, ForeignKey("post_tag.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "post_id", Integer, ForeignKey("post.id", ondelete="CASCADE"), primary_key=True
+    ),
+    Column(
+        "tag_id",
+        Integer,
+        ForeignKey("post_tag.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
     bind_key="pyduck",
 )
 
 
-class QuestionReaction(db.Model):
-    """Represent question reaction."""
-
-    __bind_key__ = "pyduck"
+class Vote(db.Model):
+    """Represent vote."""
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    question_id = mapped_column(ForeignKey("question.id"))
+    user_id = mapped_column(ForeignKey("user.id"), index=True)
+    target: Mapped[str] = mapped_column(index=True)
+    target_id: Mapped[int]
+    created_at: Mapped[str]
+
+    # configuration.
+    __bind_key__ = "pyduck"
+    __table_args__ = (
+        UniqueConstraint("user_id", "target", "target_id"),
+        Index("target", "target_id"),
+    )
+    __mapper_args__ = {"polymorphic_on": "target", "polymorphic_identity": "vote"}
+
+    # relationship.
+    user: Mapped[User] = relationship("pyduck.auth.models.User")
+
+
+class QuestionVote(Vote):
+    """Represent vote to question."""
+
+    __mapper_args__ = {"polymorphic_identity": "question"}
+
+    # relationship.
+    question: Mapped[Question] = relationship(
+        "Question",
+        primaryjoin="foreign(QuestionVote.target_id) == Question.id",
+    )
+
+
+class AnswerVote(Vote):
+    """Represent vote to answer."""
+
+    __mapper_args__ = {"polymorphic_identity": "answer"}
+
+    # relationship.
+    answer: Mapped[Answer] = relationship(
+        "Answer",
+        primaryjoin="foreign(AnswerVote.target_id) == Answer.id",
+    )
+
+
+class PostVote(Vote):
+    """Represent vote to post."""
+
+    __mapper_args__ = {"polymorphic_identity": "post"}
+    # relationship.
+    post: Mapped[Post] = relationship(
+        "Post", primaryjoin="foreign(PostVote.target_id) == Post.id"
+    )
+
+
+class PostCommentVote(Vote):
+    """Represent vote to post's comment."""
+
+    __mapper_args__ = {"polymorphic_identity": "post_comment"}
+
+    # relationship.
+    post_comment: Mapped[PostComment] = relationship(
+        "PostComment",
+        primaryjoin="foreign(PostCommentVote.target_id) == PostComment.id",
+    )
+
+
+class Reaction(db.Model):
+    """Represent reaction."""
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id = mapped_column(ForeignKey("user.id"), index=True)
+    target: Mapped[str] = mapped_column(index=True)
+    target_id: Mapped[int]
     code: Mapped[str]
     created_at: Mapped[str]
 
-    # constraints.
-    __table_args__ = (UniqueConstraint("user_id", "question_id", "code"),)
-
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
-
-
-class QuestionVote(db.Model):
-    """Represent question vote."""
-
+    # configuration.
     __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    question_id = mapped_column(ForeignKey("question.id"))
-    created_at: Mapped[str]
+    __table_args__ = (UniqueConstraint("user_id", "target", "target_id", "code"),)
+    __mapper_args__ = {"polymorphic_on": "target", "polymorphic_identity": "reaction"}
 
     # relationship.
     user: Mapped[User] = relationship("pyduck.auth.models.User")
+
+
+class QuestionReaction(Reaction):
+    """Represent reaction to questionn."""
+
+    __mapper_args__ = {"polymorphic_identity": "question"}
+
+    # relationship.
+    question: Mapped[Question] = relationship(
+        "Question",
+        primaryjoin="foreign(QuestionReaction.target_id) == Question.id",
+    )
+
+
+class AnswerReaction(Reaction):
+    """Represent reaction to answer."""
+
+    __mapper_args__ = {"polymorphic_identity": "answer"}
+
+    # relationship.
+    answer: Mapped[Answer] = relationship(
+        "Answer",
+        primaryjoin="foreign(AnswerReaction.target_id) == Answer.id",
+    )
+
+
+class AnswerCommentReaction(Reaction):
+    """Represent reaction to comment to answer of question."""
+
+    __mapper_args__ = {"polymorphic_identity": "answer_comment"}
+
+    # relationship.
+    answer_comment: Mapped[AnswerComment] = relationship(
+        "AnswerComment",
+        primaryjoin="foreign(AnswerCommentReaction.target_id) == AnswerComment.id",
+    )
+
+
+class PostReaction(Reaction):
+    """Represent reaction to post."""
+
+    __mapper_args__ = {"polymorphic_identity": "post"}
+
+    # relationship.
+    post: Mapped[Post] = relationship(
+        "Post",
+        primaryjoin="foreign(PostReaction.target_id) == Post.id",
+    )
+
+
+class PostCommentReaction(Reaction):
+    """Represent reaction to comment of post."""
+
+    __mapper_args__ = {"polymorphic_identity": "post_comment"}
+
+    # relationship.
+    post_comment: Mapped[PostComment] = relationship(
+        "PostComment",
+        primaryjoin="foreign(PostCommentReaction.target_id) == PostComment.id",
+    )
 
 
 class QuestionHistory(db.Model):
@@ -93,8 +229,13 @@ class Question(db.Model):
         secondary=assoc_question_tag_table, back_populates="questions"
     )
     history: Mapped[list[QuestionHistory]] = relationship()
-    votes: Mapped[list[QuestionVote]] = relationship()
-    reactions: Mapped[list[QuestionReaction]] = relationship()
+    votes: Mapped[list[QuestionVote]] = relationship(
+        "QuestionVote", primaryjoin="Question.id == foreign(QuestionVote.target_id)"
+    )
+    reactions: Mapped[list[QuestionReaction]] = relationship(
+        "QuestionReaction",
+        primaryjoin="Question.id == foreign(QuestionReaction.target_id)",
+    )
 
 
 class QuestionTag(db.Model):
@@ -120,35 +261,6 @@ class QuestionImageUpload(ImageUploadMixin, db.Model):
     user_id = mapped_column(ForeignKey("user.id"))
     question_id = mapped_column(ForeignKey("question.id"))
     created_at: Mapped[str]
-
-
-class AnswerVote(db.Model):
-    """Represent vote to answer."""
-
-    __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    answer_id = mapped_column(ForeignKey("answer.id"))
-    created_at: Mapped[str]
-
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
-
-
-class AnswerReaction(db.Model):
-    """Represent reaction to answer."""
-
-    __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    answer_id = mapped_column(ForeignKey("answer.id"))
-    code: Mapped[str]
-    created_at: Mapped[str]
-
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
 
 
 class AnswerHistory(db.Model):
@@ -182,8 +294,12 @@ class Answer(db.Model):
     user: Mapped[User] = relationship("pyduck.auth.models.User")
     history: Mapped[list[AnswerHistory]] = relationship()
     question: Mapped[Question] = relationship()
-    votes: Mapped[list[AnswerVote]] = relationship()
-    reactions: Mapped[list[AnswerReaction]] = relationship()
+    votes: Mapped[list[AnswerVote]] = relationship(
+        "AnswerVote", primaryjoin="Answer.id == foreign(AnswerVote.target_id)"
+    )
+    reactions: Mapped[list[AnswerReaction]] = relationship(
+        "AnswerReaction", primaryjoin="Answer.id == foreign(AnswerReaction.target_id)"
+    )
 
 
 class AnswerComment(db.Model):
@@ -201,23 +317,12 @@ class AnswerComment(db.Model):
 
     # relationship.
     user: Mapped[User] = relationship("pyduck.auth.models.User")
+    answer: Mapped[Answer] = relationship()
     history: Mapped[list[AnswerCommentHistory]] = relationship()
-    reactions: Mapped[list[AnswerCommentReaction]] = relationship()
-
-
-class AnswerCommentReaction(db.Model):
-    """Represent reaction to comment to answer of question."""
-
-    __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    comment_id = mapped_column(ForeignKey("answer_comment.id"))
-    code: Mapped[str]
-    created_at: Mapped[str]
-
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
+    reactions: Mapped[list[AnswerCommentReaction]] = relationship(
+        "AnswerCommentReaction",
+        primaryjoin="AnswerComment.id == foreign(AnswerCommentReaction.target_id)",
+    )
 
 
 class AnswerCommentHistory(db.Model):
@@ -229,38 +334,6 @@ class AnswerCommentHistory(db.Model):
     comment_id = mapped_column(ForeignKey("answer_comment.id"))
     content: Mapped[str]
     created_at: Mapped[str]
-
-
-class PostReaction(db.Model):
-    """Represent post reaction."""
-
-    __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    post_id = mapped_column(ForeignKey("post.id"))
-    code: Mapped[str]
-    created_at: Mapped[str]
-
-    # constraints.
-    __table_args__ = (UniqueConstraint("user_id", "post_id", "code"),)
-
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
-
-
-class PostVote(db.Model):
-    """Represent post vote."""
-
-    __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    post_id = mapped_column(ForeignKey("post.id"))
-    created_at: Mapped[str]
-
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
 
 
 class PostHistory(db.Model):
@@ -298,8 +371,12 @@ class Post(db.Model):
         secondary=assoc_post_tag_table, back_populates="posts"
     )
     history: Mapped[list[PostHistory]] = relationship()
-    votes: Mapped[list[PostVote]] = relationship()
-    reactions: Mapped[list[PostReaction]] = relationship()
+    votes: Mapped[list[PostVote]] = relationship(
+        "PostVote", primaryjoin="Post.id == foreign(PostVote.target_id)"
+    )
+    reactions: Mapped[list[PostReaction]] = relationship(
+        "PostReaction", primaryjoin="Post.id == foreign(PostReaction.target_id)"
+    )
 
 
 class PostTag(db.Model):
@@ -325,31 +402,6 @@ class PostImageUpload(ImageUploadMixin, db.Model):
     user_id = mapped_column(ForeignKey("user.id"))
     post_id = mapped_column(ForeignKey("post.id"))
     created_at: Mapped[str]
-
-
-class PostCommentVote(db.Model):
-    """Represent a vote to a comment of a post."""
-
-    __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    comment_id = mapped_column(ForeignKey("post_comment.id"))
-    created_at: Mapped[str]
-
-class PostCommentReaction(db.Model):
-    """Represent a reaction to a comment of a post."""
-
-    __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    comment_id = mapped_column(ForeignKey("post_comment.id"))
-    code: Mapped[str]
-    created_at: Mapped[str]
-
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
 
 
 class PostCommentHistory(db.Model):
@@ -381,6 +433,13 @@ class PostComment(db.Model):
 
     # relationship.
     user: Mapped[User] = relationship("pyduck.auth.models.User")
+    post: Mapped[Post] = relationship()
     history: Mapped[list[PostCommentHistory]] = relationship()
-    votes: Mapped[list[PostCommentVote]] = relationship()
-    reactions: Mapped[list[PostCommentReaction]] = relationship()
+    votes: Mapped[list[PostCommentVote]] = relationship(
+        "PostCommentVote",
+        primaryjoin="PostComment.id == foreign(PostCommentVote.target_id)",
+    )
+    reactions: Mapped[list[PostCommentReaction]] = relationship(
+        "PostCommentReaction",
+        primaryjoin="PostComment.id == foreign(PostCommentReaction.target_id)",
+    )

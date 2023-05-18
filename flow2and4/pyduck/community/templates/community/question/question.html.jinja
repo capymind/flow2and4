@@ -1,7 +1,7 @@
 {% extends "pyduck/base.html.jinja" %}
 
 
-{% from "community/question/render_vote.html.jinja" import render_vote %}
+{% from "community/question/render_vote.html.jinja" import render_vote with context %}
 {% from "community/question/render_reaction.html.jinja" import render_reaction with context %}
 {% from "community/answer/render_answer.html.jinja" import render_answer with context %}
 
@@ -68,7 +68,7 @@
                     {{ q.content }}
                 </div>
                 <div class="pt-4 d-flex gap-2">
-                    {{ render_vote(question=q, voted=voted) }}
+                    {{ render_vote(question=q) }}
                     {{ render_reaction(question=q) }}
                 </div>
             </div>

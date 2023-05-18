@@ -1,0 +1,23 @@
+{% extends "pyduck/base.html.jinja" %}
+
+{% block main %}
+<div class="container">
+    <div class="row pt-5">
+        <div class="col-12">
+            {% include "user/activity/header.html.jinja" %}
+        </div>
+    </div>
+    <div class="row py-5">
+        <div class="col-12">
+            <!-- [START] action tabs -->
+            {% include "user/activity/tabs.html.jinja" %}
+            <!-- action tabs [END] -->
+        </div>
+        <div class="col-12">
+            <div class="list-group list-group-flush pt-5">
+                {% include "user/activity/votes/list.html.jinja" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock main %}

@@ -1,7 +1,7 @@
 {% from "pyduck/data/sidebar.html.jinja" import sidebar_community %}
 {% set c = sidebar_community | selectattr("code", "eq", category) | list | first %}
 {% for question in qp %}
-{% include "community/question/question_list_item.html.jinja" %}
+{% include "community/post/post_list_item.html.jinja" %}
 {% if loop.last and qp.has_next %}
 <div
      hx-get="{{ url_for('pyduck.community.posts', page=qp.next_num) }}"

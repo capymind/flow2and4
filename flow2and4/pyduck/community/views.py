@@ -216,7 +216,10 @@ def index(category: str):
         qp = get_all_questions_by_commons(**commons.dict())
 
         return render_template(
-            "community/index/index_help.html.jinja", qp=qp, date_filters=date_filters
+            "community/index/index_help.html.jinja",
+            qp=qp,
+            date_filters=date_filters,
+            category=category,
         )
 
     else:
@@ -297,11 +300,12 @@ def question(question_id: int):
 )
 def post(post_id: int, category: str | None = None):
     """
-    (GET) Show post page.
-    (DELETE) Delete post and redirect post list.
+    (GET) Show an individual post page.
+    (DELETE) Delete a post and redirect post list page.
     """
 
     post = get_post(post_id=post_id)
+
     if post is None:
         abort(HTTPStatus.NOT_FOUND)
 
@@ -312,7 +316,7 @@ def post(post_id: int, category: str | None = None):
 
     if request.method == HTTPMethod.DELETE:
         if current_user.id != post.user_id:
-            abort(HTTPStatus.UNAUTHORIZED)
+            abort(HTTPStatus.FORBIDDEN)
 
         delete_post(post_id=post.id)
 
@@ -799,8 +803,8 @@ def question_new():
 @login_required
 def post_new(category: str):
     """
-    (GET) Show new post page.
-    (POST) Process new post.
+    (GET) Show a page in which user can write a new post.
+    (POST) Save a new post and redirect to post index page.
     """
 
     if request.method == HTTPMethod.POST:
@@ -821,6 +825,7 @@ def post_new(category: str):
 
         post = create_post(post_in=post_in, tags_in=tags_in)
 
+        # user action.
         user_action_in = UserActionCreatePostCreate(
             user_id=current_user.id, target_id=post.id
         )
@@ -988,11 +993,11 @@ def post_comment(post_id: int, post_comment_id: int | None = None):
         create_user_action(user_action_in=user_action_in)
 
         # notification.
-        if post_comment.post.user_id != post_comment.user_id:
+        if post_comment.user_id != post_comment.post.user_id:
             notification_in = NotificationForPostCommentCreate(
                 user_id=post_comment.post.user_id,
                 notification_target_id=post_comment.id,
-                from_user_id=current_user.id,
+                from_user_id=post_comment.user_id,
                 to_user_id=post_comment.post.user_id,
             )
             create_notification(notification_in=notification_in)
@@ -1041,8 +1046,6 @@ def post_comment(post_id: int, post_comment_id: int | None = None):
         )
 
     if request.method == HTTPMethod.DELETE:
-        post = delete_post_comment(post_comment_id=post_comment.id)
-
         # user action.
         delete_user_action(
             user_id=current_user.id,
@@ -1051,7 +1054,7 @@ def post_comment(post_id: int, post_comment_id: int | None = None):
         )
 
         # notification.
-        if post.user_id != current_user.id:
+        if current_user.id != post_comment.post.user_id:
             delete_notification(
                 user_id=post_comment.post.user_id,
                 notification_type="create_post_comment",
@@ -1059,6 +1062,8 @@ def post_comment(post_id: int, post_comment_id: int | None = None):
                 from_user_id=current_user.id,
                 to_user_id=post_comment.post.user_id,
             )
+
+        delete_post_comment(post_comment_id=post_comment.id)
 
         res = make_response()
         res.headers["HX-Trigger-After-Settle"] = "postcomment-deleted"

@@ -7,250 +7,275 @@
 {% set s = request.args.get("sorters") %}
 {% set p = request.args.get("periods", []) %}
 <div class="container">
-    <div class="bg-primary-subtle rounded-2 mt-3 p-3">
-        <div class="fs-4 fw-bold">
-            {{ c.emoji }}
-            <span class="text-primary-emphasis">{{ c.name }}</span>
-        </div>
-        <div class="pt-2">
-            {{ c.description }}
+    <div class="row">
+        <div class="col">
+            <div class="bg-primary-subtle rounded-2 mt-3 p-3">
+                <div class="fs-4 fw-bold">
+                    {{ c.emoji }}
+                    <span class="text-primary-emphasis">{{ c.name }}</span>
+                </div>
+                <div class="pt-2">
+                    {{ c.description }}
+                </div>
+            </div>
         </div>
     </div>
-    <div class="mt-3">
-        <div class="d-flex 
-                    flex-column justify-content-end align-items-end gap-2
+    <div class="row">
+        <div class="col">
+            <div class="mt-3">
+                <div class="d-flex 
+                    flex-column gap-2
                     flex-lg-row justify-content-lg-end align-items-lg-center">
-            <div class="search flex-grow-1">
-                <form method="GET"
-                      action="{{ url_for('pyduck.community.index', category=c.code, sorters=s, filters=f) }}"
-                      x-data="{
+                    <div class="search flex-grow-1">
+                        <form method="GET"
+                              action="{{ url_for('pyduck.community.index', category=c.code, sorters=s, filters=f) }}"
+                              x-data="{
                         _field: '{{ q.split('-', 2)[0] if q is not none else 'all' }}',
                         _value: '{{ q.split('-', 2)[2] if q is not none else '' }}',
                         get query() {
                             return `${this._field}-contains-${this._value}`
                         }
                       }">
-                    <div class="input-group">
-                        <button class="btn btn-outline-secondary dropdown-toggle"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                            검색
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a
-                                   type="button"
-                                   class="dropdown-item d-flex justify-content-between"
-                                   :class="_field === 'all' && 'active'"
-                                   @click="_field='all'">
-                                    <span>전체</span>
-                                    <span :class="_field === 'all' || 'd-none'">
-                                        <i class="bi bi-check-circle"></i>
-                                    </span>
-                                </a>
-                            <li>
-                                <a
-                                   type="button"
-                                   class="dropdown-item d-flex justify-content-between"
-                                   :class="_field === 'title' && 'active'"
-                                   @click="_field='title'">
-                                    <span>제목</span>
-                                    <span :class="_field === 'title' || 'd-none'">
-                                        <i class="bi bi-check-circle"></i>
-                                    </span>
-                                </a>
-                            <li>
-                                <a
-                                   type="button"
-                                   class="dropdown-item d-flex justify-content-between"
-                                   :class="_field === 'content' && 'active'"
-                                   @click="_field='content'">
-                                    <span>내용</span>
-                                    <span :class="_field === 'content' || 'd-none'">
-                                        <i class="bi bi-check-circle"></i>
-                                    </span>
-                                </a>
-                            <li>
-                                <a type="button"
-                                   class="dropdown-item d-flex justify-content-between"
-                                   :class="_field === 'author' && 'active'"
-                                   @click="_field='author'">
-                                    <span>작성자</span>
-                                    <span :class="_field === 'author' || 'd-none'">
-                                        <i class="bi bi-check-circle"></i>
-                                    </span>
-                                </a>
-                            </li>
-                        </ul>
-                        <input
-                               type="text"
-                               minlength="2"
-                               maxlength="20"
-                               class="form-control"
-                               placeholder="검색어 입력 후 Enter.."
-                               aria-label="search" x-model='_value' required>
-                        <input type="hidden" name="query" x-model="query">
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary dropdown-toggle"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                    검색
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a
+                                           type="button"
+                                           class="dropdown-item d-flex justify-content-between"
+                                           :class="_field === 'all' && 'active'"
+                                           @click="_field='all'">
+                                            <span>전체</span>
+                                            <span :class="_field === 'all' || 'd-none'">
+                                                <i class="bi bi-check-circle"></i>
+                                            </span>
+                                        </a>
+                                    <li>
+                                        <a
+                                           type="button"
+                                           class="dropdown-item d-flex justify-content-between"
+                                           :class="_field === 'title' && 'active'"
+                                           @click="_field='title'">
+                                            <span>제목</span>
+                                            <span :class="_field === 'title' || 'd-none'">
+                                                <i class="bi bi-check-circle"></i>
+                                            </span>
+                                        </a>
+                                    <li>
+                                        <a
+                                           type="button"
+                                           class="dropdown-item d-flex justify-content-between"
+                                           :class="_field === 'content' && 'active'"
+                                           @click="_field='content'">
+                                            <span>내용</span>
+                                            <span :class="_field === 'content' || 'd-none'">
+                                                <i class="bi bi-check-circle"></i>
+                                            </span>
+                                        </a>
+                                    <li>
+                                        <a type="button"
+                                           class="dropdown-item d-flex justify-content-between"
+                                           :class="_field === 'author' && 'active'"
+                                           @click="_field='author'">
+                                            <span>작성자</span>
+                                            <span :class="_field === 'author' || 'd-none'">
+                                                <i class="bi bi-check-circle"></i>
+                                            </span>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <input
+                                       type="text"
+                                       minlength="2"
+                                       maxlength="20"
+                                       class="form-control"
+                                       placeholder="검색어 입력 후 Enter.."
+                                       aria-label="search" x-model='_value' required>
+                                <input type="hidden" name="query" x-model="query">
+                            </div>
+                        </form>
                     </div>
-                </form>
-            </div>
-            <div class="d-flex gap-2">
-                <div class="periods">
-                    <div class="dropdown" x-data="{}">
-                        <button class="btn btn-outline-secondary rounded-0" type="button" data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                            <i class="bi bi-clock-history"></i>
-                            <span>
-                                기간:
-                                {% with %}
-                                {% set menu = date_filters|selectattr("code", "eq", p)|list %}
-                                {% if menu %}
-                                {% set item = menu|first %}
-                                <span>{{ item["name"] }}</span>
-                                {% else %}
-                                <span>전체</span>
-                                {% endif %}
-                                {% endwith %}
-                            </span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            {% for df in date_filters %}
-                            {% if df.code is eq 'created_at-ge-all' %}
-                            {% set active = p|length == 0 %}
-                            <li>
-                                <a
-                                   class="dropdown-item d-flex justify-content-between {{ 'active' if active }}"
-                                   href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters=s) }}">
-                                    <span>{{ df.name }}</span>
-                                    {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif %}
-                                </a>
-                            </li>
-                            {% else %}
-                            {% set active = df.code in p %}
-                            <li>
-                                <a
-                                   class="dropdown-item d-flex justify-content-between {{ 'active' if active }}"
-                                   href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters=s, periods=df.code) }}">
-                                    <span>{{ df.name }}</span>
-                                    {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif %}
-                                </a>
-                            </li>
-                            {% endif %}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-                <div class="sort">
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary rounded-0" type="button" data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                            <i class="bi bi-sort-down"></i>
-                            <span>
-                                정렬:
-                                <span>
-                                    {{
-                                    '추천순' if s is eq 'vote_count-desc' else
-                                    '댓글순' if s is eq 'comment_count-desc' else
-                                    '최신순'
-                                    }}
-                                </span>
-                            </span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                {% set active = s is eq 'created_at-desc' or s is none %}
-                                <a class="dropdown-item d-flex justify-content-between {{ 'active' if active }}"
-                                   href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters='created_at-desc', periods=p) }}">
-                                    <span>최신순</span>
-                                    {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif %}
-                                </a>
-                            </li>
-                            <li>
-                                {% set active = s is eq 'vote_count-desc' %}
-                                <a class="dropdown-item d-flex justify-content-between {{ 'active' if s is eq 'vote_count-desc' }}"
-                                   href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters='vote_count-desc', periods=p) }}">
-                                    <span>추천순</span>
-                                    {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif %}
-                                </a>
-                            </li>
-                            <li>
-                                {% set active = s is eq 'comment_count-desc' %}
-                                <a class="dropdown-item d-flex justify-content-between {{ 'active' if s is eq 'comment_count-desc' }}"
-                                   href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters='comment_count-desc', periods=p) }}">
-                                    <span>댓글순</span>
-                                    {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif %}
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="filter">
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary rounded-0" type="button" data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                            <i class="bi bi-filter"></i>
-                            <span>
-                                필터
-                                <span>
-                                    {{
-                                    ': 해결됨' if f is eq 'answered-eq-true' else
-                                    ': 미해결' if f is eq 'answered-eq-false'
-                                    }}
-                                </span>
-                            </span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                {% set active = f is eq 'answered-eq-true' %}
-                                <a class="dropdown-item {{ 'active' if active }} d-flex justify-content-between"
-                                   href="{{ 
+                    <div class="d-flex justify-content-between justify-content-lg-start gap-2">
+                        <div class="d-flex align-items-center gap-1">
+                            <div class="periods">
+                                <div class="dropdown" x-data="{}">
+                                    <button class="btn btn-outline-secondary rounded-0" type="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <i class="bi bi-clock-history"></i>
+                                        <span>
+                                            기간:
+                                            {% with %}
+                                            {% set menu = date_filters|selectattr("code", "eq", p)|list %}
+                                            {% if menu %}
+                                            {% set item = menu|first %}
+                                            <span>{{ item["name"] }}</span>
+                                            {% else %}
+                                            <span>전체</span>
+                                            {% endif %}
+                                            {% endwith %}
+                                        </span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        {% for df in date_filters %}
+                                        {% if df.code is eq 'created_at-ge-all' %}
+                                        {% set active = p|length == 0 %}
+                                        <li>
+                                            <a
+                                               class="dropdown-item d-flex justify-content-between {{ 'active' if active }}"
+                                               href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters=s) }}">
+                                                <span>{{ df.name }}</span>
+                                                {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif
+                                                %}
+                                            </a>
+                                        </li>
+                                        {% else %}
+                                        {% set active = df.code in p %}
+                                        <li>
+                                            <a
+                                               class="dropdown-item d-flex justify-content-between {{ 'active' if active }}"
+                                               href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters=s, periods=df.code) }}">
+                                                <span>{{ df.name }}</span>
+                                                {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif
+                                                %}
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="sort">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary rounded-0" type="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <i class="bi bi-sort-down"></i>
+                                        <span>
+                                            정렬:
+                                            <span>
+                                                {{
+                                                '추천순' if s is eq 'vote_count-desc' else
+                                                '댓글순' if s is eq 'comment_count-desc' else
+                                                '최신순'
+                                                }}
+                                            </span>
+                                        </span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            {% set active = s is eq 'created_at-desc' or s is none %}
+                                            <a class="dropdown-item d-flex justify-content-between {{ 'active' if active }}"
+                                               href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters='created_at-desc', periods=p) }}">
+                                                <span>최신순</span>
+                                                {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif
+                                                %}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            {% set active = s is eq 'vote_count-desc' %}
+                                            <a class="dropdown-item d-flex justify-content-between {{ 'active' if s is eq 'vote_count-desc' }}"
+                                               href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters='vote_count-desc', periods=p) }}">
+                                                <span>추천순</span>
+                                                {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif
+                                                %}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            {% set active = s is eq 'comment_count-desc' %}
+                                            <a class="dropdown-item d-flex justify-content-between {{ 'active' if s is eq 'comment_count-desc' }}"
+                                               href="{{ url_for('pyduck.community.index', category=c.code, query=q, filters=f, sorters='comment_count-desc', periods=p) }}">
+                                                <span>댓글순</span>
+                                                {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif
+                                                %}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="filter">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary rounded-0" type="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <i class="bi bi-filter"></i>
+                                        <span>
+                                            필터
+                                            <span>
+                                                {{
+                                                ': 해결됨' if f is eq 'answered-eq-true' else
+                                                ': 미해결' if f is eq 'answered-eq-false'
+                                                }}
+                                            </span>
+                                        </span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            {% set active = f is eq 'answered-eq-true' %}
+                                            <a class="dropdown-item {{ 'active' if active }} d-flex justify-content-between"
+                                               href="{{ 
                                     url_for('pyduck.community.index', category=c.code, query=q, sorters=s, period=p) if active else
                                     url_for('pyduck.community.index', category=c.code, query=q, filters='answered-eq-true', sorters=s, periods=p) 
                                 }}">
-                                    <span>해결됨</span>
-                                    {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif %}
-                                </a>
-                            </li>
-                            <li>
-                                {% set active = f is eq 'answered-eq-false' %}
-                                <a class="dropdown-item {{ 'active' if active }} d-flex justify-content-between"
-                                   href="{{ 
+                                                <span>해결됨</span>
+                                                {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif
+                                                %}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            {% set active = f is eq 'answered-eq-false' %}
+                                            <a class="dropdown-item {{ 'active' if active }} d-flex justify-content-between"
+                                               href="{{ 
                                     url_for('pyduck.community.index', category=c.code, query=q, sorters=s, periods=p) if active else
                                     url_for('pyduck.community.index', category=c.code, query=q, filters='answered-eq-false', sorters=s, periods=p) 
                                 }}">
-                                    <span>미해결</span>
-                                    {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif %}
-                                </a>
-                            </li>
-                        </ul>
+                                                <span>미해결</span>
+                                                {% if active %}<span><i class="bi bi-check-circle"></i></span>{% endif
+                                                %}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            {% if current_user.is_authenticated %}
+                            <a class="btn btn-primary rounded-0"
+                               href="{{ url_for('pyduck.community.question_new') }}">질문하기</a>
+                            {% else %}
+                            <a class="btn btn-primary rounded-0" hx-get="{{ url_for('pyduck.community.question_new') }}"
+                               hx-swap="none">질문하기</a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div>
-                {% if current_user.is_authenticated %}
-                <a class="btn btn-primary rounded-0" href="{{ url_for('pyduck.community.question_new') }}">질문하기</a>
-                {% else %}
-                <a class="btn btn-primary rounded-0" hx-get="{{ url_for('pyduck.community.question_new') }}"
-                   hx-swap="none">질문하기</a>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
-<div class="container">
-    <div class="p-3 bg-body-tertiary rounded-2 mt-3">
-        {% for question in qp %}
-        {% include "community/question/question_list_item.html.jinja" %}
-        <!-- [start] infinite scroll -->
-        {% if loop.last and qp.has_next %}
-        <div
-             hx-get="{{ url_for('pyduck.community.questions', page=qp.next_num) }}"
-             hx-trigger="revealed"
-             hx-swapp="afterend">
+<div>
+    <div class="row">
+        <div class="col pt-3">
+            <div class="p-3 bg-body-tertiary rounded-2">
+                {% for question in qp %}
+                {% include "community/question/question_list_item.html.jinja" %}
+                <!-- [start] infinite scroll -->
+                {% if loop.last and qp.has_next %}
+                <div
+                     hx-get="{{ url_for('pyduck.community.questions', page=qp.next_num) }}"
+                     hx-trigger="revealed"
+                     hx-swapp="afterend">
+                </div>
+                {% endif %}
+                <!-- infinite scroll [end] -->
+                {% endfor %}
+            </div>
         </div>
-        {% endif %}
-        <!-- infinite scroll [end] -->
-        {% endfor %}
     </div>
 </div>
 {% endblock %}

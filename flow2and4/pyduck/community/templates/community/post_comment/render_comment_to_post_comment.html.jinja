@@ -7,13 +7,18 @@
     }"
      data-pd-comment-to-post-comment="{{ comment.id }}"
      @comment-to-post-comment-created="commentmode=false"
-     class="d-flex ps-2 ps-md-3 pe-3">
+     class="d-flex ps-2 ps-md-3 pe-2">
     <div class="vr me-2"></div>
     <div x-show="!editmode" class="flex-grow-1 py-3">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-1">
                 <img class="rounded-circle" src="{{ comment.user.avatar.url }}" width="33" height="33">
-                <span>{{ comment.user.nickname }}</span>
+                <div>
+                    <span>{{ comment.user.nickname }}</span>
+                    <small class="text-secondary">
+                        <sl-relative-time date="{{ comment.created_at }}" lang="ko"></sl-relative-time>
+                    </small>
+                </div>
             </div>
             <div class="d-flex gap-2">
                 {% if comment.history|length %}
@@ -87,41 +92,48 @@
                             })">
                 <span class="fst-italic text-underline"><u>대댓글 달기</u></span>
             </button>
-            <div class="d-flex justify-content-end">
+            <div x-show="commentmode" x-transition>
                 <template x-if="commentmode">
-                    <div class="pt-3 pt-lg-4 pb-2 pb-lg-3 px-2 px-lg-3 rounded-2 bg-body-tertiary text-end mt-2"
-                         style="width:99%">
-                        <form
-                              class="post-comment"
-                              hx-post="{{ url_for(
+                    <div class="d-flex justify-content-center">
+                        <div class="pt-3 pt-lg-4 pb-2 pb-lg-3 px-2 px-lg-3 rounded-2 bg-body-tertiary mt-2"
+                             style="width:99%">
+                            <form
+                                  class="post-comment"
+                                  hx-post="{{ url_for(
                                 'pyduck.community.comment_to_post_comment', 
                                 post_id=comment.post_id, 
                                 post_comment_id=comment.parent_id,
                                 _method='POST') }}"
-                              hx-swap="beforeend"
-                              hx-target="[data-pd-comments-to-post-comment='{{ comment.parent_id }}']">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <textarea name="content"
-                                      data-pd-comment-to-comment-editor="{{ comment.id }}"></textarea>
-                            <div class="pt-2 text-end">
-                                <button type="button"
-                                        class="btn btn-secondary rounded-0"
-                                        @click="commentmode=false">
-                                    취소하기
-                                </button>
-                                <button class="btn btn-primary rounded-0">
-                                    대댓글달기
-                                </button>
-                            </div>
-                        </form>
+                                  hx-swap="beforeend"
+                                  hx-target="[data-pd-comments-to-post-comment='{{ comment.parent_id }}']"
+                                  data-editor-type="new-post-comment">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="fw-bold text-primary pb-3">
+                                    <i class="bi bi-chat-right"></i>
+                                    <span>대댓글 작성 중...</span>
+                                </div>
+                                <textarea name="content"
+                                          data-pd-comment-to-comment-editor="{{ comment.id }}"></textarea>
+                                <div class="pt-2 text-end">
+                                    <button type="button"
+                                            class="btn btn-secondary rounded-0"
+                                            @click="commentmode=false">
+                                        취소하기
+                                    </button>
+                                    <button class="btn btn-primary rounded-0">
+                                        대댓글달기
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </template>
             </div>
         </div>
     </div>
-    <template x-if="editmode">
-        <div class="flex-grow-1 py-3">
-            <div class="pt-3 pt-lg-4 pb-2 pb-lg-3 px-2 px-lg-3 rounded-2 bg-body-tertiary text-end mt-2"
+    <div x-show="editmode" class="flex-grow-1 py-3" x-transition>
+        <template x-if="editmode">
+            <div class="pt-3 pt-lg-4 pb-2 pb-lg-3 px-2 px-lg-3 rounded-2 bg-body-tertiary mt-2"
                  style="width:99%">
                 <form
                       class="post-comment"
@@ -134,6 +146,10 @@
                       hx-target="[data-pd-comment-to-post-comment='{{ comment.id }}']">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                    <div class="fw-bold text-primary pb-3">
+                        <i class="bi bi-eraser"></i>
+                        <span>대댓글 수정 중...</span>
+                    </div>
                     <textarea name="content" data-pd-comment-to-post-comment-editor="{{ comment.id }}">
                         {{ comment.content }}
                     </textarea>
@@ -149,8 +165,7 @@
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </template>
+        </template>
+    </div>
 </div>
 {% endmacro %}

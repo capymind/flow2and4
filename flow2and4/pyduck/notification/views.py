@@ -20,3 +20,5 @@ def index():
     """Show notification index page."""
 
     return render_template("notification/index.html.jinja")
+
+

@@ -6,56 +6,61 @@
         editmode: false,
         commentmode: false,
         showcomments: false,
+        commentCount: {{ post_comment.comment_count }}
     }"
      data-pd-post-comment="{{ post_comment.id }}"
-     @comment-to-post-comment-created="commentmode=false; showcomments=true">
+     @comment-to-post-comment-created="commentmode=false; showcomments=true; commentCount++">
     <div class="row mt-3">
         <div class="col-12 col-lg-8">
-            <div
-                 class="px-3 pt-3 pb-2 border rounded-2"
-                 x-show="!editmode">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-1">
-                        <img class="rounded-circle" src="{{ post_comment.user.avatar.url }}" width="33" height="33">
-                        <span>{{ post_comment.user.nickname }}</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        {% if post_comment.history|length %}
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                <small>수정이력</small>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end px-3">
-                                <div>{{ post_comment.history|length}}번 수정됨</div>
+            <div class="px-3 pt-3 pb-2 border rounded-2">
+                <div x-show="!editmode">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-1">
+                            <img class="rounded-circle" src="{{ post_comment.user.avatar.url }}" width="33" height="33">
+                            <div>
+                                <span>{{ post_comment.user.nickname }}</span>
+                                <small class="text-secondary">
+                                    <sl-relative-time date="{{ post_comment.created_at }}" lang="ko"></sl-relative-time>
+                                </small>
                             </div>
                         </div>
-                        {% endif %}
-                        {% if current_user.id is eq post_comment.user_id %}
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <button class="dropdown-item"
-                                            type="button"
-                                            @click="editmode=true; 
+                        <div class="d-flex gap-2">
+                            {% if post_comment.history|length %}
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <small>수정이력</small>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end px-3">
+                                    <div>{{ post_comment.history|length}}번 수정됨</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if current_user.id is eq post_comment.user_id %}
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item"
+                                                type="button"
+                                                @click="editmode=true; 
                                             $nextTick(() => { 
                                                 $dispatch(
                                                     'require-editor', { target: 'post_comment', id: '{{ post_comment.id }}' }
                                                 ) 
                                             })">
-                                        수정하기
-                                    </button>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="[data-pd-modal-manager]"
-                                            x-data
-                                            @click="$dispatch(
+                                            수정하기
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="[data-pd-modal-manager]"
+                                                x-data
+                                                @click="$dispatch(
                                                 'delete-post-comment',
                                                 { 
                                                     url: '{{ url_for(
@@ -65,116 +70,128 @@
                                                         _method='DELETE') }}',
                                                     target: {{ post_comment.id }} 
                                                 })">
-                                        삭제하기
-                                    </button>
-                                </li>
-                            </ul>
+                                            삭제하기
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
-                </div>
-                <div class="pt-2">
-                    {{ post_comment.content }}
-                </div>
-                <div class="pt-2 d-flex justify-content-between">
-                    <div class="d-flex gap-2">
-                        {{ render_vote(post_comment=post_comment) }}
-                        {{ render_reaction(post_comment=post_comment) }}
+                    <div class="pt-3">
+                        {{ post_comment.content }}
                     </div>
-                </div>
-                <div class="d-flex pt-2 gap-2 justify-content-between align-items-center">
-                    <div class="d-flex">
-                        {% if post_comment.comment_count %}
-                        <div>
-                            <button
-                                    @click="showcomments=!showcomments"
-                                    class="btn btn-sm btn-outline-secondary border-0"
-                                    hx-get="{{ url_for('pyduck.community.comments_to_post_comment', 
+                    <div class="pt-2 d-flex justify-content-between">
+                        <div class="d-flex gap-2">
+                            {{ render_vote(post_comment=post_comment) }}
+                            {{ render_reaction(post_comment=post_comment) }}
+                        </div>
+                    </div>
+                    <div class="d-flex pt-2 gap-2 justify-content-between align-items-center">
+                        <div class="d-flex">
+                            <div x-show="commentCount > 0">
+                                <button
+                                        @click="showcomments=!showcomments"
+                                        class="btn btn-sm btn-outline-secondary border-0"
+                                        hx-get="{{ url_for('pyduck.community.comments_to_post_comment', 
                                         post_id=post_comment.post_id, 
                                         post_comment_id=post_comment.id) }}"
-                                    hx-trigger="click once"
-                                    hx-target="[data-pd-comments-to-post-comment='{{ post_comment.id }}']">
-                                <span class="fst-italic text-underline">
-                                    <u x-text="
+                                        hx-trigger="click once"
+                                        hx-target="[data-pd-comments-to-post-comment='{{ post_comment.id }}']">
+                                    <span class="fst-italic text-underline">
+                                        <u x-text="
                                     !showcomments 
-                                    ? '대댓글 {{ post_comment.comment_count }}개 보기'
+                                    ? `대댓글 ${commentCount}개 보기`
                                     : '대댓글 접기'"></u>
-                                </span>
-                            </button>
-                        </div>
-                        {% endif %}
-                        <div>
-                            <button
-                                    class="btn btn-sm btn-outline-secondary border-0"
-                                    x-show="!commentmode"
-                                    @click="commentmode=true;
+                                    </span>
+                                </button>
+                            </div>
+                            <div>
+                                <button
+                                        class="btn btn-sm btn-outline-secondary border-0"
+                                        x-show="!commentmode"
+                                        @click="commentmode=true;
                                             $nextTick(() => {
                                                 $dispatch(
                                                     'require-editor', { target: 'comment_to_post_comment', id: '{{ post_comment.id }}'}
                                                 )
                                             })">
-                                <span class="fst-italic text-underline"><u>대댓글 달기</u></span>
-                            </button>
+                                    <span class="fst-italic text-underline"><u>대댓글 달기</u></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <template x-if="commentmode">
-                    <div class="py-4 px-3 rounded-2 bg-body-tertiary mt-2">
+                <div x-show="editmode" x-transition>
+                    <template x-if="editmode">
                         <form
                               class="post-comment"
-                              hx-post="{{ url_for(
+                              hx-put="{{ url_for('pyduck.community.post_comment', post_id=post_comment.post_id, post_comment_id=post_comment.id) }}"
+                              hx-swap="outerHTML"
+                              hx-target="[data-pd-post-comment='{{ post_comment.id }}']"
+                              data-editor-type="edit-post-comment">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="fw-bold text-primary pb-3">
+                                <i class="bi bi-eraser"></i>
+                                <span>댓글 수정 중...</span>
+                            </div>
+                            <textarea name="content" data-pd-post-comment-editor="{{ post_comment.id }}">
+                                {{ post_comment.content }}
+                            </textarea>
+                            <div class="pt-2 text-end">
+                                <button
+                                        class="btn btn-secondary rounded-0"
+                                        type="button"
+                                        @click="editmode=false">
+                                    취소하기
+                                </button>
+                                <button class="btn btn-primary rounded-0">
+                                    수정하기
+                                </button>
+                            </div>
+                        </form>
+                    </template>
+                </div>
+                <div x-show="commentmode" x-transition>
+                    <template x-if="commentmode">
+                        <div class="py-4 px-3 rounded-2 bg-body-tertiary mt-2">
+                            <form
+                                  class="post-comment"
+                                  hx-post="{{ url_for(
                                 'pyduck.community.comment_to_post_comment', 
                                 post_id=post_comment.post_id, 
                                 post_comment_id=post_comment.id,
                                 _method='POST') }}"
-                              hx-swap="beforeend"
-                              hx-target="[data-pd-comments-to-post-comment='{{ post_comment.id }}']">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <textarea name="content"
-                                      data-pd-comment-to-post-comment-editor="{{ post_comment.id }}"></textarea>
-                            <div class="pt-2 text-end">
-                                <button type="button"
-                                        class="btn btn-secondary rounded-0"
-                                        @click="commentmode=false">
-                                    취소하기
-                                </button>
-                                <button class="btn btn-primary rounded-0">
-                                    대댓글달기
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </template>
+                                  hx-swap="beforeend"
+                                  hx-target="[data-pd-comments-to-post-comment='{{ post_comment.id }}']"
+                                  data-editor-type="new-post-comment">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="fw-bold text-primary pb-3">
+                                    <i class="bi bi-chat-right"></i>
+                                    <span>대댓글 작성 중...</span>
+                                </div>
+                                <textarea name="content"
+                                          data-pd-comment-to-post-comment-editor="{{ post_comment.id }}"></textarea>
+                                <div class="pt-2 text-end">
+                                    <button type="button"
+                                            class="btn btn-secondary rounded-0"
+                                            @click="commentmode=false">
+                                        취소하기
+                                    </button>
+                                    <button class="btn btn-primary rounded-0">
+                                        대댓글달기
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </template>
+                </div>
                 <div
                      class="comments mt-2 bg-body-secondary rounded-2"
                      data-pd-comments-to-post-comment="{{ post_comment.id }}"
                      x-show="showcomments">
                 </div>
             </div>
-            <template x-if="editmode">
-                <form
-                      class="post-comment"
-                      hx-put="{{ url_for('pyduck.community.post_comment', post_id=post_comment.post_id) }}"
-                      hx-swap="outerHTML"
-                      hx-target="[data-pd-post-comment='{{ post_comment.id }}']">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="post_comment_id" value="{{ post_comment.id }}">
-                    <textarea name="content" data-pd-post-comment-editor="{{ post_comment.id }}">
-                        {{ post_comment.content }}
-                    </textarea>
-                    <div class="pt-2 text-end">
-                        <button
-                                class="btn btn-secondary rounded-0"
-                                type="button"
-                                @click="editmode=false">
-                            취소하기
-                        </button>
-                        <button class="btn btn-primary rounded-0">
-                            수정하기
-                        </button>
-                    </div>
-                </form>
-            </template>
         </div>
     </div>
 </div>

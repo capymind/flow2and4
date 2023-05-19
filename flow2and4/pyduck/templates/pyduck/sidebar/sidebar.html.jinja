@@ -1,24 +1,47 @@
 <div class="pt-5">
-    <button class="btn btn-outline-primary border-0 w-100 rounded-0" type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-        <div class="fw-bold fs-5">커뮤니티</div>
-    </button>
-    <div class="collapse show pt-1" id="collapseExample">
-        <ul class="nav flex-column nav-pills nav-fill">
-            {% for item in sidebar_community %}
-            <li class="nav-item text-start">
-                <a class="nav-link link-body-emphasis d-flex" aria-current="page"
-                   href="{{ url_for('pyduck.community.index', category=item.code) }}">
-                    <div class="ms-3" style="width: 30px;">{{ item.emoji }}</div>
-                    <div class="ps-3">{{ item.name }}</div>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
+    <div x-data="{ collapsed: false }">
+        <a class="btn btn-outline-primary border-0 w-100 px-4 rounded-0 d-flex justify-content-between align-items-center"
+           type="button"
+           data-bs-toggle="collapse"
+           data-bs-target="#collapse-community"
+           aria-expanded="false"
+           aria-controls="collapse-community">
+            <div class="fw-bold fs-5">커뮤니티</div>
+            <div>
+                <i class="bi bi-arrows-expand" x-show="!collapsed"></i>
+                <template x-if="collapsed">
+                    <i class="bi bi-arrows-collapse"></i>
+                </template>
+            </div>
+        </a>
+        <div class="collapse show pt-1" id="collapse-community"
+             @show-bs-collapse.dot="collapsed=false"
+             @hide-bs-collapse.dot="collapsed=true">
+            <ul class="nav flex-column nav-fill">
+                {% for item in sidebar_community %}
+                {% set active = category is eq item.code %}
+                <li class="nav-item text-start">
+                    <a class="nav-link link-body-emphasis d-flex justify-content-between px-4 sidebar__nav-link
+                            {{ 'active fw-bold' if active }}"
+                       aria-current="{{ 'page' if active }}"
+                       href="{{ url_for('pyduck.community.index', category=item.code) }}">
+                        <div class="d-flex">
+                            <div style="width: 30px;">{{ item.emoji }}</div>
+                            <div class="ps-3">{{ item.name }}</div>
+                        </div>
+                        {% if category == item.code %}
+                        <div>
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </div>
-<div class="pt-3">
+{# <div class="pt-3">
     <button class="btn btn-outline-info border-0 w-100 rounded-0" type="button"
             data-bs-toggle="collapse"
             data-bs-target="#learning" aria-expanded="false" aria-controls="collapseExample">
@@ -57,4 +80,4 @@
             {% endfor %}
         </ul>
     </div>
-</div>
+</div> #}

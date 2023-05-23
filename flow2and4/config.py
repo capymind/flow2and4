@@ -29,6 +29,9 @@ class WebConfig(BaseSettings):
     GMAIL_SMTP_LOGIN_USERNAME: str
     GMAIL_SMTP_LOGIN_PASSWORD: str
 
+    # Redis for Server-Sent Events
+    REDIS_CONNECTION_URL_FOR_SERVER_SENT_EVENTS: str
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

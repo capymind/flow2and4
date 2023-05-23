@@ -22,6 +22,7 @@ CMD [ \
     "gevent", \
     "-b", \
     "0.0.0.0", \
-    "flow2and4.app:create_app(mode='prod')" \
+    "--reload", \
+    "flow2and4.app:create_app(mode='prodlike')" \
     ]
 

@@ -23,7 +23,17 @@ def create_app(mode: str = "dev"):
         from flow2and4.config import WebTestConfig
 
         app.config.from_object(WebTestConfig())
+    
+    if mode == "prodlike":
+        from flow2and4.config import WebProdConfig
+        from werkzeug.middleware.proxy_fix import ProxyFix
 
+        app.config.from_object(WebProdConfig())
+        app.config["SERVER_NAME"] = "localhost"
+        # Tell Flask it is Behind a Proxy
+        # https://flask.palletsprojects.com/en/2.3.x/deploying/proxy_fix/
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+    
     if mode == "prod":
         from flow2and4.config import WebProdConfig
         from werkzeug.middleware.proxy_fix import ProxyFix

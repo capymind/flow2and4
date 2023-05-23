@@ -183,6 +183,8 @@ from flow2and4.pyduck.notification.service import (
     delete_notification,
 )
 from flow2and4.pyduck.schemas import CommonParameters
+from flow2and4.pyduck.sse.views import bp as sse, EventStream
+
 
 logger = logging.getLogger(__name__)
 
@@ -738,6 +740,9 @@ def post_vote(post_id: int):
                 to_user_id=post.user_id,
             )
             create_notification(notification_in=notification_in)
+
+            eventstream = EventStream("post:vote", event="notification")
+            sse.publish(message=eventstream, channel=post.user_id)
 
     if request.method == HTTPMethod.DELETE:
         if vote is None:

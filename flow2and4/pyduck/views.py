@@ -10,6 +10,7 @@ from flow2and4.pyduck.auth.views import bp as bp_auth
 from flow2and4.pyduck.auth.views import bp_user
 from flow2and4.pyduck.community.views import bp as bp_community
 from flow2and4.pyduck.notification.views import bp as bp_notification
+from flow2and4.pyduck.sse.views import bp as bp_sse
 
 bp = Blueprint(
     "pyduck",
@@ -22,6 +23,8 @@ bp.register_blueprint(bp_auth)
 bp.register_blueprint(bp_user)
 bp.register_blueprint(bp_community)
 bp.register_blueprint(bp_notification)
+bp.register_blueprint(bp_sse)
+
 
 @bp.errorhandler(HTTPStatus.NOT_FOUND)
 def not_found_errorhandler(e):

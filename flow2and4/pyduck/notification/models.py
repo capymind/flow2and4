@@ -28,6 +28,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from flow2and4.database import db
 from flow2and4.pyduck.auth.models import User
+from flow2and4.pyduck.community.models import (
+    PostVote,
+    Post,
+    PostComment,
+    PostCommentReaction,
+)
 
 
 class Notification(db.Model):
@@ -65,12 +71,21 @@ class Notification(db.Model):
 
     # relationship
     user: Mapped[User] = relationship("pyduck.auth.models.User", foreign_keys=[user_id])
+    from_user: Mapped[User] = relationship(
+        "pyduck.auth.models.User", foreign_keys=[from_user_id]
+    )
 
 
 class NotificationForPostComment(Notification):
     """Represent notification that someone create a comment to my post."""
 
     __mapper_args__ = {"polymorphic_identity": "create_post_comment"}
+
+    # relationship.
+    post_comment: Mapped[PostComment] = relationship(
+        "PostComment",
+        primaryjoin="PostComment.id == foreign(NotificationForPostComment.notification_target_id)",
+    )
 
 
 class NotificationForAnswer(Notification):
@@ -90,6 +105,12 @@ class NotificationForPostVote(Notification):
     """Represent notification for voting post."""
 
     __mapper_args__ = {"polymorphic_identity": "vote_post"}
+
+    # relationship.
+    post: Mapped[Post] = relationship(
+        "Post",
+        primaryjoin="foreign(NotificationForPostVote.notification_target_id) == Post.id",
+    )
 
 
 class NotificationForPostCommentVote(Notification):
@@ -121,6 +142,12 @@ class NotificationForPostCommentReaction(Notification):
     """Represent notification that someone react to my comment in a post."""
 
     __mapper_args__ = {"polymorphic_identity": "reaction_post_comment"}
+
+    # relationship.
+    post_comment_reaction: Mapped[PostCommentReaction] = relationship(
+        "PostCommentReaction",
+        primaryjoin="foreign(NotificationForPostCommentReaction.notification_target_id) == PostCommentReaction.id",
+    )
 
 
 class NotificationForQuestionReaction(Notification):

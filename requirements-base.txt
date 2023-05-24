@@ -16,6 +16,8 @@ gevent
 
 redis[hiredis]
 
+celery
+
 # flask extensions
 Flask-sqlalchemy
 Flask-Migrate

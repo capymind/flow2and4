@@ -1,11 +1,24 @@
+{% set unread = pagination.items|selectattr("read", "false")|list|length %}
+{% from "community/data/reaction.html.jinja" import reaction_master as rm %}
+
 <div class="btn-group"
      hx-ext="sse"
      sse-connect="{{ url_for('pyduck.sse.stream_to_user', user_id=current_user.id) }}"
-     x-data="{
-            read: false
-    }"
-     @notification.window="console.log('choco in the building')"
-     hx-get="{{ url_for('pyduck.notification.bell')}}">
+     data-pyduck-notification-bell
+     hx-target="this"
+     hx-swap="outerHTML"
+     x-data="{ unread: {{ unread }} > 0 ? true : false }"
+     @notificationread="unread=false"
+     x-init="() => {
+        const tooltipTriggerList = document.querySelectorAll(`[data-bs-toggle='tooltip']`)
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+     }">
+    <!-- [start] trigger by SSE -->
+    <div
+         hx-get="{{ url_for('pyduck.notification.bell') }}"
+         hx-trigger="sse:notification">
+    </div>
+    <!-- trigger by SSE [end] -->
     <button
             class="btn btn-outline-secondary border-0 rounded-circle dropdown-toggle no-caret"
             style="padding-inline:10px;"
@@ -13,10 +26,13 @@
             data-bs-toggle="dropdown"
             data-bs-auto-close="true"
             aria-expanded="false"
-            data-bs-offset="0,5">
+            data-bs-offset="0,5"
+            hx-get="{{ url_for('pyduck.notification.bell_read') }}"
+            hx-trigger="click once"
+            hx-swap="none">
         <span class="fs-5 position-relative">
             <i class="bi bi-bell"></i>
-            <template x-if="!read">
+            <template x-if="unread">
                 <span
                       class="position-absolute translate-middle badge border border-light rounded-circle bg-danger"
                       style="padding:5px; top:3px; left:18px;">
@@ -25,7 +41,101 @@
             </template>
         </span>
     </button>
-    <ul class="dropdown-menu dropdown-menu-end pt-0" data-notification-container>
-        <li></li>
+    <ul class="dropdown-menu dropdown-menu-end px-3 pt-2 pb-3"
+        style="width:27rem"
+        data-notification-container>
+        <li class="border-bottom border-2 border-primary-subtle mb-2">
+            <div class="p-2 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-primary-emphasis">알림</span>
+                <div class="d-flex align-items-center gap-1">
+                    <button class="btn btn-outline-secondary border-0 rounded-circle"
+                            type="button"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="상세 화면으로">
+                        <span class="fs-5"><i class="bi bi-folder2-open"></i></span>
+                    </button>
+                    <button class="btn btn-outline-secondary border-0 rounded-circle"
+                            type="button"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="알림 모두삭제">
+                        <span class="fs-5"><i class="bi bi-trash3"></i></span>
+                    </button>
+                    <button class="btn btn-outline-secondary border-0 rounded-circle"
+                            type="button"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="설정 화면으로">
+                        <span class="fs-5"><i class="bi bi-gear"></i></span>
+                    </button>
+                </div>
+            </div>
+        </li>
+        {% if pagination.total == 0 %}
+        <li>
+            <div>
+                <span>알림이 없습니다.</span>
+            </div>
+        </li>
+        {% else %}
+        {% for item in pagination %}
+        <li class="border-bottom">
+            <div class="d-flex px-2 py-3 gap-3 position-relative">
+                <div>
+                    <img src="{{ item.from_user.avatar.url }}" class="rounded-circle" width="33" height="33">
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">{{ item.from_user.nickname }}</span>
+                        <small class="text-secondary">
+                            <sl-relative-time date="{{ item.created_at }}" lang="ko"></sl-relative-time>
+                        </small>
+                    </div>
+                    <div>
+                        {% if item.notification_type is eq "vote_post" %}
+                        <div>
+                            <span>아래의 작성하신 게시물을 <span class="fw-bold">추천</span>했습니다.</span>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('pyduck.community.post', post_id=item.post.id )}}"
+                               class="stretched-link">
+                                {{ item.post.title }}
+                            </a>
+                        </div>
+                        {% elif item.notification_type is eq "create_post_comment" %}
+                        <div>
+                            <span>아래의 작성하신 게시물에 <span class="fw-bold">댓글</span>을 달았습니다.</span>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('pyduck.community.post', post_id=item.post_comment.post.id )}}"
+                               class="stretched-link">
+                                {{ item.post_comment.post.title }}
+                            </a>
+                        </div>
+                        {% elif item.notification_type is eq "reaction_post_comment" %}
+                        {% set r = rm|selectattr("code", "eq", item.post_comment_reaction.code) %}
+                        <div>
+                            <span>
+                                아래의 작성하신 게시물에 대한 댓글에
+                                <span class="fw-bold">
+                                    리액션({{ r.emoji, r.code }})
+                                </span>
+                                을 했습니다.
+                            </span>
+                        </div>
+                        {# <div>
+                            <a href="{{ url_for('pyduck.community.post', post_id=item.post_comment_reaction.post_comment.post.id )}}"
+                               class="stretched-link">
+                                {{ item.post_comment_reaction.post_comment.post.title }}
+                            </a>
+                        </div> #}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </li>
+        {% endfor %}
+        {% endif %}
     </ul>
 </div>

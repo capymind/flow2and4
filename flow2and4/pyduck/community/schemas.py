@@ -491,6 +491,6 @@ class PostCommentRead(PostCommentBase):
     # relationship.
     user: UserRead
     post: PostRead
-    votes: list[PostCommentVoteRead | None]
-    history: list[PostCommentHistoryRead | None]
-    reactions: list[PostCommentReactionRead | None]
+    votes: list[PostCommentVoteRead] | None
+    history: list[PostCommentHistoryRead] | None
+    reactions: list[PostCommentReactionRead] | None

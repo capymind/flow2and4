@@ -1007,6 +1007,9 @@ def post_comment(post_id: int, post_comment_id: int | None = None):
             )
             create_notification(notification_in=notification_in)
 
+            eventstream = EventStream("postcomment:created", event="notification")
+            sse.publish(message=eventstream, channel=post_comment.post.user_id)
+
         res = make_response(
             render_template(
                 "community/post_comment/post_comment.html.jinja",

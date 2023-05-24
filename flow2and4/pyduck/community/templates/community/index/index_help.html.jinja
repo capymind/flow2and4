@@ -108,17 +108,19 @@
                                             data-bs-toggle="dropdown"
                                             aria-expanded="false">
                                         <i class="bi bi-clock-history"></i>
-                                        <span>
+                                        <span class="d-none d-sm-inline">
                                             기간:
-                                            {% with %}
-                                            {% set menu = date_filters|selectattr("code", "eq", p)|list %}
-                                            {% if menu %}
-                                            {% set item = menu|first %}
-                                            <span>{{ item["name"] }}</span>
-                                            {% else %}
-                                            <span>전체</span>
-                                            {% endif %}
-                                            {% endwith %}
+                                            <span>
+                                                {% with %}
+                                                {% set menu = date_filters|selectattr("code", "eq", p)|list %}
+                                                {% if menu %}
+                                                {% set item = menu|first %}
+                                                <span>{{ item["name"] }}</span>
+                                                {% else %}
+                                                <span>전체</span>
+                                                {% endif %}
+                                                {% endwith %}
+                                            </span>
                                         </span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -156,7 +158,7 @@
                                             data-bs-toggle="dropdown"
                                             aria-expanded="false">
                                         <i class="bi bi-sort-down"></i>
-                                        <span>
+                                        <span class="d-none d-sm-inline">
                                             정렬:
                                             <span>
                                                 {{
@@ -204,7 +206,7 @@
                                             data-bs-toggle="dropdown"
                                             aria-expanded="false">
                                         <i class="bi bi-filter"></i>
-                                        <span>
+                                        <span class="d-none d-sm-inline">
                                             필터
                                             <span>
                                                 {{
@@ -257,8 +259,6 @@
             </div>
         </div>
     </div>
-</div>
-<div>
     <div class="row">
         <div class="col pt-3">
             <div class="p-3 bg-body-tertiary rounded-2">

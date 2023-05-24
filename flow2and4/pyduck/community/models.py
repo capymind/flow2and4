@@ -230,11 +230,14 @@ class Question(db.Model):
     )
     history: Mapped[list[QuestionHistory]] = relationship()
     votes: Mapped[list[QuestionVote]] = relationship(
-        "QuestionVote", primaryjoin="Question.id == foreign(QuestionVote.target_id)"
+        "QuestionVote",
+        primaryjoin="Question.id == foreign(QuestionVote.target_id)",
+        viewonly=True,
     )
     reactions: Mapped[list[QuestionReaction]] = relationship(
         "QuestionReaction",
         primaryjoin="Question.id == foreign(QuestionReaction.target_id)",
+        viewonly=True,
     )
 
 
@@ -295,10 +298,14 @@ class Answer(db.Model):
     history: Mapped[list[AnswerHistory]] = relationship()
     question: Mapped[Question] = relationship()
     votes: Mapped[list[AnswerVote]] = relationship(
-        "AnswerVote", primaryjoin="Answer.id == foreign(AnswerVote.target_id)"
+        "AnswerVote",
+        primaryjoin="Answer.id == foreign(AnswerVote.target_id)",
+        viewonly=True,
     )
     reactions: Mapped[list[AnswerReaction]] = relationship(
-        "AnswerReaction", primaryjoin="Answer.id == foreign(AnswerReaction.target_id)"
+        "AnswerReaction",
+        primaryjoin="Answer.id == foreign(AnswerReaction.target_id)",
+        viewonly=True,
     )
 
 
@@ -321,7 +328,7 @@ class AnswerComment(db.Model):
     history: Mapped[list[AnswerCommentHistory]] = relationship()
     reactions: Mapped[list[AnswerCommentReaction]] = relationship(
         "AnswerCommentReaction",
-        primaryjoin="AnswerComment.id == foreign(AnswerCommentReaction.target_id)",
+        primaryjoin="foreign(AnswerComment.id) == AnswerCommentReaction.target_id",
     )
 
 
@@ -372,10 +379,12 @@ class Post(db.Model):
     )
     history: Mapped[list[PostHistory]] = relationship()
     votes: Mapped[list[PostVote]] = relationship(
-        "PostVote", primaryjoin="Post.id == foreign(PostVote.target_id)"
+        "PostVote", primaryjoin="Post.id == foreign(PostVote.target_id)", viewonly=True
     )
     reactions: Mapped[list[PostReaction]] = relationship(
-        "PostReaction", primaryjoin="Post.id == foreign(PostReaction.target_id)"
+        "PostReaction",
+        primaryjoin="Post.id == foreign(PostReaction.target_id)",
+        viewonly=True,
     )
 
 
@@ -438,8 +447,10 @@ class PostComment(db.Model):
     votes: Mapped[list[PostCommentVote]] = relationship(
         "PostCommentVote",
         primaryjoin="PostComment.id == foreign(PostCommentVote.target_id)",
+        viewonly=True,
     )
     reactions: Mapped[list[PostCommentReaction]] = relationship(
         "PostCommentReaction",
         primaryjoin="PostComment.id == foreign(PostCommentReaction.target_id)",
+        viewonly=True,
     )

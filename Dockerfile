@@ -23,6 +23,8 @@ CMD [ \
     "-b", \
     "0.0.0.0", \
     "--reload", \
+    "--reload-engine", \
+    "poll",\
     "flow2and4.app:create_app(mode='prodlike')" \
     ]
 

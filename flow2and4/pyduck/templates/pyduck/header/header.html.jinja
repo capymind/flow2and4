@@ -20,40 +20,18 @@
             </div>
             {% if current_user.is_authenticated %}
             <div class="d-flex align-items-center gap-2">
-                <div class="btn-group"
-                     hx-ext="sse"
-                     sse-connect="{{ url_for('pyduck.sse.stream_to_user', user_id=current_user.id) }}"
-                     x-data="{
-                        read: true
-                     }"
-                     @notification.window="console.log('choco in the building')"
-                     data-pyduck-bell>
-                    <button
-                            class="btn btn-outline-secondary border-0 rounded-circle dropdown-toggle no-caret"
+                <div
+                     hx-trigger="load"
+                     hx-get="{{ url_for('pyduck.notification.bell') }}"
+                     hx-target="this"
+                     hx-swap="outerHTML">
+                    <button class="btn btn-outline-secondary border-0 rounded-circle dropdown-toggle no-caret"
                             style="padding-inline:10px;"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            data-bs-auto-close="true"
-                            aria-expanded="false"
-                            data-bs-offset="0,5"
-                            hx-get="{{ url_for('pyduck.notification.bell') }}"
-                            hx-trigger="sse:notification"
-                            hx-swap="outerHTML"
-                            hx-target="[data-pyduck-bell]">
+                            type="button">
                         <span class="fs-5 position-relative">
                             <i class="bi bi-bell"></i>
-                            <template x-if="!read">
-                                <span
-                                      class="position-absolute translate-middle badge border border-light rounded-circle bg-danger"
-                                      style="padding:5px; top:3px; left:18px;">
-                                    <span class="visually-hidden">unread notifications</span>
-                                </span>
-                            </template>
                         </span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end pt-0" data-notification-container>
-                        <li></li>
-                    </ul>
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-outline-secondary border-0 rounded-circle dropdown-toggle no-caret p-1"
@@ -136,15 +114,21 @@
             </div>
             {% else %}
             <div class="d-flex align-items-center gap-1">
-                <button class="btn btn-outline-secondary rounded-0" data-bs-toggle="modal"
-                        data-bs-target="#modal" x-data @click="$dispatch('modalsignup')">회원가입</button>
-                <button class="btn btn-outline-dark rounded-0 btn__signin" data-bs-toggle="modal"
+                <button
+                        class="btn btn-outline-secondary rounded-0"
+                        data-bs-toggle="modal"
                         data-bs-target="#modal"
-                        x-data @click="$dispatch('modalsignin')">로그인</button>
+                        x-data
+                        @click="$dispatch('modalsignup')">회원가입</button>
+                <button
+                        class="btn btn-outline-dark rounded-0 btn__signin"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal"
+                        x-data
+                        @click="$dispatch('modalsignin')">로그인</button>
             </div>
             {% endif %}
         </div>
-
         <!-- [START] offcanvas sidebar -->
         <div class="offcanvas offcanvas-start bg-body-tertiary" data-bs-scroll="true" tabindex="-1"
              id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel" style="--bs-offcanvas-width: 280px;">

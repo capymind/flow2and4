@@ -68,6 +68,21 @@
         [x-cloak] {
             display: none !important;
         }
+
+        /* [START] htmx indicator style */
+        .pyduck-htmx-indicator {
+            display: none;
+        }
+
+        .htmx-request .pyduck-htmx-indicator {
+            display: inline;
+        }
+
+        .htmx-request.pyduck-htmx-indicator {
+            display: inline;
+        }
+
+        /* htmx indicator style [END] */
     </style>
 
     <style>
@@ -140,11 +155,18 @@
     {% endblock toast_manager %}
     <!-- toast manager: handle all toasts [END] -->
     <!-- [START] modal -->
-    <div class="modal fade" id="modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div
+         class="modal fade"
+         id="modal"
+         tabindex="-1"
+         aria-labelledby="modalLabel"
+         aria-hidden="true">
         <div class="modal-dialog"
              x-data="{ 
                 template: '',
                 username: '',
+                nickname: '',
+                password: '',
                 loginRequired: false,
                 showUsernameDontExist: false,
                 showPasswordDontMatch: false,
@@ -171,7 +193,7 @@
                     <form hx-post="{{ url_for('pyduck.auth.sign_up') }}" hx-swap="none">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="modal-header">
-                            <h1 class="modal-title fw-bold fs-4" id="exampleModalLabel">
+                            <h1 class="modal-title fw-bold fs-4" id="modalLabel">
                                 <span class="logo-color"><i class="bi bi-tropical-storm"></i>pyduck</span>
                             </h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -186,8 +208,14 @@
                             <div class="pt-4 col-lg-9">
                                 <div>
                                     <div class="form-floating">
-                                        <input type="email" class="form-control rounded-0" id="username" name="username"
-                                               placeholder="guido@python.com" x-model="username" required>
+                                        <input type="email"
+                                               class="form-control rounded-0"
+                                               id="username"
+                                               name="username"
+                                               placeholder="guido@python.com"
+                                               x-model="username"
+                                               @input="username=username.replaceAll(' ', '')"
+                                               required>
                                         <label for="username">이메일<sup class="fw-bold text-danger">*</sup></label>
                                     </div>
                                     <div class="ps-1">
@@ -199,8 +227,16 @@
                                 </div>
                                 <div class="pt-3">
                                     <div class="form-floating">
-                                        <input type="password" class="form-control rounded-0" id="password"
-                                               name="password" placeholder="비밀번호" minlength="8" maxlength="20" required>
+                                        <input type="password"
+                                               class="form-control rounded-0"
+                                               id="password"
+                                               name="password"
+                                               placeholder="비밀번호"
+                                               minlength="8"
+                                               maxlength="20"
+                                               x-model="password"
+                                               @input="password=password.replaceAll(' ', '')"
+                                               required>
                                         <label for="password">비밀번호<sup class="fw-bold text-danger">*</sup></label>
                                     </div>
                                     <div class="ps-1">
@@ -209,8 +245,16 @@
                                 </div>
                                 <div class="pt-3">
                                     <div class="form-floating">
-                                        <input type="text" class="form-control rounded-0" id="nickname" name="nickname"
-                                               placeholder="닉네임" minlength="2" maxlength="20">
+                                        <input type="text"
+                                               class="form-control rounded-0"
+                                               id="nickname"
+                                               name="nickname"
+                                               placeholder="닉네임"
+                                               minlength="2"
+                                               maxlength="20"
+                                               x-model="nickname"
+                                               @input="nickname=nickname.replaceAll(' ', '')"
+                                               required>
                                         <label for="nickname">닉네임<sup class="fw-bold text-danger">*</sup></label>
                                     </div>
                                     <div class="ps-1">
@@ -224,8 +268,12 @@
                         </div>
                         <div class="modal-footer">
                             <small class="text-secondary">회원가입 함에 따라, 개인정보정책 및 사이트운영방침에 동의한 것으로 간주합니다.</small>
-                            <button class="btn btn-outline-dark rounded-0">
+                            <button class="btn btn-outline-dark rounded-0 d-flex align-items-center gap-2">
                                 회원가입
+                                <div class="spinner-border spinner-border-sm text-info pyduck-htmx-indicator"
+                                     role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
                             </button>
                         </div>
                     </form>
@@ -236,7 +284,7 @@
                     <form hx-post="{{ url_for('pyduck.auth.sign_in') }}" hx-swap="none">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="modal-header">
-                            <h1 class="modal-title fw-bold fs-4" id="exampleModalLabel">
+                            <h1 class="modal-title fw-bold fs-4" id="modalLabel">
                                 <span class="logo-color"><i class="bi bi-tropical-storm"></i>pyduck</span>
                             </h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -282,7 +330,7 @@
             <template x-if="template === 'user-created'">
                 <div class="modal-content rounded-0">
                     <div class="modal-header">
-                        <h1 class="modal-title fw-bold fs-4" id="exampleModalLabel">
+                        <h1 class="modal-title fw-bold fs-4" id="modalLabel">
                             <span class="logo-color"><i class="bi bi-tropical-storm"></i>pyduck</span>
                         </h1>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -293,6 +341,10 @@
                             <div class="pyduck-para pt-3 text-secondary">
                                 [<span x-text="username"></span>]으로 인증 메일을 전송 하였습니다.
                                 메일 내의 인증 링크를 클릭하시면 회원가입이 완료됩니다.
+                            </div>
+                            <div class="pt-3 text-secondary">
+                                최대 3-5분 정도 소요 될 수 있으며, 기재하신 이메일 사이트 정책(예: 카카오)에 따라서
+                                스팸메일함으로 이동 될 수도 있습니다.
                             </div>
                         </div>
                     </div>

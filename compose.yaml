@@ -5,8 +5,11 @@ services:
       dockerfile: Dockerfile
     volumes:
       - type: bind
-        source: .
-        target: /app
+        source: ./flow2and4
+        target: /app/flow2and4
+      - type: bind
+        source: ./instance
+        target: /app/instance
     expose:
       - "8000"
   nginx:
@@ -24,7 +27,7 @@ services:
     expose:
       - "6379"
     healthcheck:
-      test: ["CMD", "redis-cli" , "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 30s
       retries: 50

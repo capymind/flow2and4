@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from http import HTTPStatus
 from flask_login import LoginManager
 from sqlalchemy import MetaData
+from celery import Celery, Task
 
 login_manager = LoginManager()
 
@@ -17,13 +18,13 @@ def create_app(mode: str = "dev"):
     app.config.from_object(WebConfig())
 
     if mode == "dev":
-        app.config["SERVER_NAME"] = "localhost:5000"
+        app.config["SERVER_NAME"] = "localhost:5555"
 
     if mode == "test":
         from flow2and4.config import WebTestConfig
 
         app.config.from_object(WebTestConfig())
-    
+
     if mode == "prodlike":
         from flow2and4.config import WebProdConfig
         from werkzeug.middleware.proxy_fix import ProxyFix
@@ -33,7 +34,7 @@ def create_app(mode: str = "dev"):
         # Tell Flask it is Behind a Proxy
         # https://flask.palletsprojects.com/en/2.3.x/deploying/proxy_fix/
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
-    
+
     if mode == "prod":
         from flow2and4.config import WebProdConfig
         from werkzeug.middleware.proxy_fix import ProxyFix
@@ -44,28 +45,12 @@ def create_app(mode: str = "dev"):
         # https://flask.palletsprojects.com/en/2.3.x/deploying/proxy_fix/
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-    # [START] Register blueprints
-    from flow2and4.csduck.views import bp as bp
-
-    app.register_blueprint(bp, subdomain="csduck")
-
-    from flow2and4.myweb.views import bp as bp_rodi
-
-    app.register_blueprint(bp_rodi)
-
-    from flow2and4.faduck.views import bp as bp_faduck
-
-    app.register_blueprint(bp_faduck, subdomain="faduck")
-
-    from flow2and4.pyduck.views import bp as bp_pyduck
-
-    app.register_blueprint(bp_pyduck, subdomain="pyduck")
-
-    # Register blueprints [END]
-
     # [START] Register extensions
     from flask_wtf import CSRFProtect
     from flow2and4.database import db, migrate
+
+    # Celery.
+    celery_init_app(app)
 
     # CSRF protection.
     csrf = CSRFProtect()
@@ -117,4 +102,40 @@ def create_app(mode: str = "dev"):
 
     # Register extensions [END]
 
+    # [START] Register blueprints
+    from flow2and4.csduck.views import bp as bp
+
+    app.register_blueprint(bp, subdomain="csduck")
+
+    from flow2and4.myweb.views import bp as bp_rodi
+
+    app.register_blueprint(bp_rodi)
+
+    from flow2and4.faduck.views import bp as bp_faduck
+
+    app.register_blueprint(bp_faduck, subdomain="faduck")
+
+    from flow2and4.pyduck.views import bp as bp_pyduck
+
+    app.register_blueprint(bp_pyduck, subdomain="pyduck")
+
+    # Register blueprints [END]
+
     return app
+
+
+def celery_init_app(app: Flask) -> Celery:
+    """Configure celery app and return celery app."""
+
+    class FlaskTask(Task):
+        """Celery Task with flask application context."""
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery_app = Celery(app.name, task_cls=FlaskTask)
+    celery_app.config_from_object(app.config["CELERY"])
+    celery_app.set_default()
+    app.extensions["celery"] = celery_app
+    return celery_app

@@ -20,13 +20,17 @@ def send_sign_up_verification_email(
     """Send sigup verification email."""
 
     message = EmailMessage()
-    message["Subject"] = f"💌pyduck 회원가입 인증메일"
+    message["Subject"] = f"pyduck 회원가입 인증메일"
 
     username, domain = user.username.split("@")
     message["To"] = Address(username=username, domain=domain)
-    message["From"] = Address(display_name="👋pyduck 로디")
+    message["From"] = Address(
+        display_name="pyduck 로디", username="mfs.rodi", domain="gmail.com"
+    )
 
-    template = get_template_attribute("auth/emails/signup_verification.html.jinja", "verification")
+    template = get_template_attribute(
+        "auth/emails/signup_verification.html.jinja", "verification"
+    )
     verification_url = url_for(
         "pyduck.auth.sign_up_verification",
         username=user.username,

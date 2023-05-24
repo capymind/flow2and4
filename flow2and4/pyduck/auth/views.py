@@ -21,6 +21,7 @@ This is the module for handling requests related to pyduck auth.
 /me/activity/reactions                  -> my_activity_about_reaction
 """
 
+import time
 import json
 import os
 import uuid
@@ -40,7 +41,6 @@ from flask_login import current_user, login_required, login_user, logout_user
 from pydantic import ValidationError
 from werkzeug.utils import secure_filename
 
-from flow2and4.pyduck.auth.helpers import send_sign_up_verification_email
 from flow2and4.pyduck.auth.schemas import (
     UserAvatarCreate,
     UserAvatarUpdate,
@@ -72,6 +72,7 @@ from flow2and4.pyduck.community.service import (
     get_all_reactions_by_commons,
     get_all_votes_by_commons,
 )
+from flow2and4.pyduck.auth import tasks
 from flow2and4.pyduck.schemas import CommonParameters
 
 bp = Blueprint(
@@ -101,44 +102,46 @@ def sign_up():
     """
 
     if request.method == HTTPMethod.POST:
-        try:
-            user_in = UserCreate(**request.form.to_dict())
-            user_in.password = generate_password_hash(user_in.password)
+        # try:
+        #     user_in = UserCreate(**request.form.to_dict())
+        #     user_in.password = generate_password_hash(user_in.password)
 
-        except ValidationError:
-            abort(HTTPStatus.BAD_REQUEST)
+        # except ValidationError:
+        #     abort(HTTPStatus.BAD_REQUEST)
 
-        errors = []
-        if does_field_value_exist("username", user_in.username):
-            errors.append("username-exists")
-        if does_field_value_exist("nickname", user_in.nickname):
-            errors.append("nickname-exists")
+        # errors = []
+        # if does_field_value_exist("username", user_in.username):
+        #     errors.append("username-exists")
+        # if does_field_value_exist("nickname", user_in.nickname):
+        #     errors.append("nickname-exists")
 
-        if len(errors) > 0:
-            res = make_response()
-            res.headers["HX-Trigger"] = json.dumps({key: "" for key in errors})
-            return res, HTTPStatus.BAD_REQUEST
+        # if len(errors) > 0:
+        #     res = make_response()
+        #     res.headers["HX-Trigger"] = json.dumps({key: "" for key in errors})
+        #     return res, HTTPStatus.BAD_REQUEST
 
-        user = create_user(user_in=user_in)
+        # user = create_user(user_in=user_in)
 
-        avatar_in = UserAvatarCreate(user_id=user.id)
-        create_user_avatar(avatar_in=avatar_in)
+        # avatar_in = UserAvatarCreate(user_id=user.id)
+        # create_user_avatar(avatar_in=avatar_in)
 
-        backdrop_in = UserBackdropCreate(user_id=user.id)
-        create_user_backdrop(backdrop_in=backdrop_in)
+        # backdrop_in = UserBackdropCreate(user_id=user.id)
+        # create_user_backdrop(backdrop_in=backdrop_in)
 
-        snss_in = [
-            UserSnsCreate(user_id=user.id, platform=sns)
-            for sns in ALLOWED_SNS_PLATFORMS
-        ]
-        delete_and_create_user_sns(user_id=user.id, snss_in=snss_in)
+        # snss_in = [
+        #     UserSnsCreate(user_id=user.id, platform=sns)
+        #     for sns in ALLOWED_SNS_PLATFORMS
+        # ]
+        # delete_and_create_user_sns(user_id=user.id, snss_in=snss_in)
 
-        verification_in = UserVerificationEmailCreate(
-            user_id=user.id, vcode=uuid.uuid4().hex
-        )
-        verification = create_user_verification_email(verification_in=verification_in)
+        # verification_in = UserVerificationEmailCreate(
+        #     user_id=user.id, vcode=uuid.uuid4().hex
+        # )
+        # create_user_verification_email(verification_in=verification_in)
 
-        send_sign_up_verification_email(user=user, verification=verification)
+        # tasks.send_sign_up_verification_email.delay(user.id)
+        # # tasks.add.delay(1, 2)
+        time.sleep(3.0)  # minimum delay for sendign email.
 
         res = make_response()
         res.headers["HX-Trigger-After-Settle"] = "user-created"

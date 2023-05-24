@@ -91,6 +91,11 @@ def _get_user(id: int) -> User | None:
     return db.session.scalars(select(User).filter_by(id=id)).one_or_none()
 
 
+def get_user(*, id: int) -> UserRead | None:
+    user = _get_user(id=id)
+    return UserRead.from_orm(user) if user else None
+
+
 def get_pyduck_user_for_session(*, id: int) -> UserReadForSession:
     """Select user for sign-in session."""
     user = _get_user(id=id)

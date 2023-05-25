@@ -109,13 +109,17 @@
                             <div>
                                 <button
                                         class="btn btn-sm btn-outline-secondary border-0"
-                                        x-show="!commentmode"
+                                        {% if current_user.is_authenticated %}
                                         @click="commentmode=true;
                                             $nextTick(() => {
                                                 $dispatch(
                                                     'require-editor', { target: 'comment_to_post_comment', id: '{{ post_comment.id }}'}
                                                 )
-                                            })">
+                                            })"
+                                        {% else %}
+                                        @click="$dispatch('login-required')"
+                                        {% endif %}
+                                        x-show="!commentmode">
                                     <span class="fst-italic text-underline"><u>대댓글 달기</u></span>
                                 </button>
                             </div>

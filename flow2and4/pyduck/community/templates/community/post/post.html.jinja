@@ -132,7 +132,11 @@
                  @postcomment-created="commentmode=false">
                 <button
                         class="btn btn-outline-secondary w-100"
+                        {% if current_user.is_authenticated %}
                         @click="commentmode=true; $nextTick(() => {$dispatch('require-editor')})"
+                        {% else %}
+                        @click="$dispatch('login-required')"
+                        {% endif %}
                         x-show="!commentmode">
                     <span>댓글 작성하기</span>
                 </button>

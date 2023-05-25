@@ -140,17 +140,20 @@ def sign_up():
         create_user_verification_email(verification_in=verification_in)
 
         tasks.send_sign_up_verification_email.delay(user.id)
-        # tasks.add.delay(1, 2)
-        time.sleep(3.0)  # minimum delay for sendign email.
+        time.sleep(3.0)  # faked delay for sending an email.
 
-        res = make_response()
-        res.headers["HX-Trigger-After-Settle"] = "user-created"
+        res = make_response(
+            render_template(
+                "auth/modals/signup_email_verification.html.jinja", user=user
+            ),
+        )
 
         return res, HTTPStatus.CREATED
 
-    res = make_response(render_template("auth/modals/signup.html.jinja"))
+    if request.method == HTTPMethod.GET:
+        res = make_response(render_template("auth/modals/signup.html.jinja"))
 
-    return res
+        return res
 
 
 @bp.route("/sign-up/verification", methods=[HTTPMethod.GET])
@@ -193,28 +196,32 @@ def welcome():
 @bp.route("/sign-in", methods=[HTTPMethod.GET, HTTPMethod.POST])
 def sign_in():
     """
-    (GET) Show sign in page.
-    (POST) Process sign in.
+    (GET) Return sign in modal fragment.
+    (POST) Process sign in and redirect home if correct else trigger htmx event.
     """
 
-    username = request.form.get("username")
-    password = request.form.get("password")
+    if request.method == HTTPMethod.POST:
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-    user = get_user_by_username(username=username)
+        user = get_user_by_username(username=username)
 
-    res = make_response()
-    if user is None:
-        res.headers["HX-Trigger"] = "username-dont-exist"
-        return res, HTTPStatus.UNAUTHORIZED
+        res = make_response()
+        if user is None:
+            res.headers["HX-Trigger"] = "username-dont-exist"
+            return res, HTTPStatus.UNAUTHORIZED
 
-    if not check_password_hash(user.password, password):
-        res.headers["HX-Trigger"] = "password-dont-match"
-        return res, HTTPStatus.UNAUTHORIZED
+        if not check_password_hash(user.password, password):
+            res.headers["HX-Trigger"] = "password-dont-match"
+            return res, HTTPStatus.UNAUTHORIZED
 
-    login_user(user)
-    res.headers["HX-Redirect"] = url_for("pyduck.index")
+        login_user(user)
+        res.headers["HX-Redirect"] = url_for("pyduck.index")
 
-    return res
+        return res
+
+    if request.method == HTTPMethod.GET:
+        return render_template("auth/modals/signin.html.jinja")
 
 
 @bp.route("/sign-out", methods=[HTTPMethod.GET])

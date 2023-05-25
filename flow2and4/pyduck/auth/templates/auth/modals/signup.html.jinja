@@ -1,33 +1,20 @@
 <div class="modal-content rounded-0">
     <div class=""
          x-data="{ 
-                template: '',
                 username: '',
                 nickname: '',
                 password: '',
-                loginRequired: false,
-                showUsernameDontExist: false,
-                showPasswordDontMatch: false,
                 showNicknameExist: false,
                 showUsernameExist: false,
-                handlehtmx() {
-                    htmx.process(document.body)
-                },
-                showSigninModal() {
-                    let signin = document.querySelector('.btn__signin')
-                    signin.click()
-                }
             }"
-         @modalsignup.document="template='signup'; $nextTick(() => {handlehtmx()})"
-         @modalsignin.document="template='signin'; $nextTick(() => {handlehtmx()})"
          @nickname-exists="showNicknameExist=true"
          @username-exists="showUsernameExist=true"
          @user-created="template='user-created'"
-         @username-dont-exist="showUsernameDontExist=true"
-         @password-dont-match="showPasswordDontMatch=true"
-         @login-required.document="showSigninModal">
-
-        <form hx-post="{{ url_for('pyduck.auth.sign_up') }}" hx-swap="none">
+         @hidden-bs-modal.dot.document="$el.remove()"
+         x-init="() => { htmx.process(document.body) }">
+        <form
+              hx-post="{{ url_for('pyduck.auth.sign_up') }}"
+              hx-target="[data-pyduck-modal-dialog]">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header">
                 <h1 class="modal-title fw-bold fs-4" id="modalLabel">

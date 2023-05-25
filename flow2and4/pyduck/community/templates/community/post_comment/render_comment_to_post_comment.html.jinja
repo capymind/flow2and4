@@ -83,13 +83,17 @@
         <div class="pt-1">
             <button
                     class="btn btn-sm btn-outline-secondary border-0"
-                    x-show="!commentmode"
+                    {% if current_user.is_authenticated %}
                     @click="commentmode=true;
                             $nextTick(() => {
                                 $dispatch(
                                     'require-editor', { target: 'comment_to_comment', id: '{{ comment.id }}'}
                                 )
-                            })">
+                            })"
+                    {% else %}
+                    @click="$dispatch('login-required')"
+                    {% endif %}
+                    x-show="!commentmode">
                 <span class="fst-italic text-underline"><u>대댓글 달기</u></span>
             </button>
             <div x-show="commentmode" x-transition>
@@ -100,10 +104,10 @@
                             <form
                                   class="post-comment"
                                   hx-post="{{ url_for(
-                                'pyduck.community.comment_to_post_comment', 
-                                post_id=comment.post_id, 
-                                post_comment_id=comment.parent_id,
-                                _method='POST') }}"
+                                    'pyduck.community.comment_to_post_comment', 
+                                    post_id=comment.post_id, 
+                                    post_comment_id=comment.parent_id,
+                                    _method='POST') }}"
                                   hx-swap="beforeend"
                                   hx-target="[data-pd-comments-to-post-comment='{{ comment.parent_id }}']"
                                   data-editor-type="new-post-comment">

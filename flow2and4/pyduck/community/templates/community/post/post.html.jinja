@@ -322,6 +322,7 @@
             })
             .then((editor) => {
                 htmx.process(document.body);
+                editor.editing.view.focus();
             })
             .catch(error => {
                 console.log(error);

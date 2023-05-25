@@ -148,7 +148,9 @@ def sign_up():
 
         return res, HTTPStatus.CREATED
 
-    return {"message": "success"}
+    res = make_response(render_template("auth/modals/signup.html.jinja"))
+
+    return res
 
 
 @bp.route("/sign-up/verification", methods=[HTTPMethod.GET])

@@ -118,8 +118,11 @@
                         class="btn btn-outline-secondary rounded-0"
                         data-bs-toggle="modal"
                         data-bs-target="#modal"
-                        x-data
-                        @click="$dispatch('modalsignup')">회원가입</button>
+                        hx-get="{{ url_for('pyduck.auth.sign_up') }}"
+                        hx-target="[data-pyduck-modal-manager]"
+                        hx-swap="innerHTML">
+                    회원가입
+                </button>
                 <button
                         class="btn btn-outline-dark rounded-0 btn__signin"
                         data-bs-toggle="modal"

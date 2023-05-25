@@ -18,7 +18,7 @@ def create_app(mode: str = "dev"):
     app.config.from_object(WebConfig())
 
     if mode == "dev":
-        app.config["SERVER_NAME"] = "localhost:5555"
+        app.config["SERVER_NAME"] = "localhost:5000"
 
     if mode == "test":
         from flow2and4.config import WebTestConfig
@@ -104,19 +104,13 @@ def create_app(mode: str = "dev"):
 
     # [START] Register blueprints
     from flow2and4.csduck.views import bp as bp
-
-    app.register_blueprint(bp, subdomain="csduck")
-
     from flow2and4.myweb.views import bp as bp_rodi
-
-    app.register_blueprint(bp_rodi)
-
     from flow2and4.faduck.views import bp as bp_faduck
-
-    app.register_blueprint(bp_faduck, subdomain="faduck")
-
     from flow2and4.pyduck.views import bp as bp_pyduck
 
+    app.register_blueprint(bp_rodi)
+    app.register_blueprint(bp, subdomain="csduck")
+    app.register_blueprint(bp_faduck, subdomain="faduck")
     app.register_blueprint(bp_pyduck, subdomain="pyduck")
 
     # Register blueprints [END]

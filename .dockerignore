@@ -1,4 +1,7 @@
 # [START] csduck customized
+.env
+.env.prod
+.env.test
 **/*.db
 *.db
 docker

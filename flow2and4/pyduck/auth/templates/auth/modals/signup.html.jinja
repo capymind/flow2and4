@@ -1,0 +1,88 @@
+<form hx-post="{{ url_for('pyduck.auth.sign_up') }}" hx-swap="none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="modal-header">
+        <h1 class="modal-title fw-bold fs-4" id="modalLabel">
+            <span class="logo-color"><i class="bi bi-tropical-storm"></i>pyduck</span>
+        </h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <div>
+            <div class="pt-3">
+                <span class="fw-bold fs-4">👋 환영합니다!!</span>
+                <br>회원가입을 위해 아래 양식을 작성해주세요.
+            </div>
+        </div>
+        <div class="pt-4 col-lg-9">
+            <div>
+                <div class="form-floating">
+                    <input type="email"
+                           class="form-control rounded-0"
+                           id="username"
+                           name="username"
+                           placeholder="guido@python.com"
+                           autocomplete="off"
+                           x-model="username"
+                           @input="username=username.replaceAll(' ', '')"
+                           required>
+                    <label for="username">이메일<sup class="fw-bold text-danger">*</sup></label>
+                </div>
+                <div class="ps-1">
+                    <small class="text-secondary">아이디 및 인증 용도(타인에게 비공개)</small>
+                </div>
+                <div class="pt-1 ps-2 text-danger" x-show="showUsernameExist">
+                    <i class="bi bi-x-circle"></i><span class="ps-1">이미 누군가 사용중인 이메일입니다.</span>
+                </div>
+            </div>
+            <div class="pt-3">
+                <div class="form-floating">
+                    <input type="password"
+                           class="form-control rounded-0"
+                           id="password"
+                           name="password"
+                           placeholder="비밀번호"
+                           minlength="8"
+                           maxlength="20"
+                           x-model="password"
+                           @input="password=password.replaceAll(' ', '')"
+                           required>
+                    <label for="password">비밀번호<sup class="fw-bold text-danger">*</sup></label>
+                </div>
+                <div class="ps-1">
+                    <small class="text-secondary">8-20자, 공백 불가</small>
+                </div>
+            </div>
+            <div class="pt-3">
+                <div class="form-floating">
+                    <input type="text"
+                           class="form-control rounded-0"
+                           id="nickname"
+                           name="nickname"
+                           placeholder="닉네임"
+                           minlength="2"
+                           maxlength="20"
+                           x-model="nickname"
+                           @input="nickname=nickname.replaceAll(' ', '')"
+                           required>
+                    <label for="nickname">닉네임<sup class="fw-bold text-danger">*</sup></label>
+                </div>
+                <div class="ps-1">
+                    <small class="text-secondary">2-20자, 공백 불가</small>
+                </div>
+                <div class="pt-1 ps-2 text-danger" x-show="showNicknameExist">
+                    <i class="bi bi-x-circle"></i><span class="ps-1">이미 누군가 사용중인 닉네임입니다.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <small class="text-secondary">회원가입 함에 따라, 개인정보정책 및 사이트운영방침에 동의한 것으로 간주합니다.</small>
+        <button class="btn btn-outline-dark rounded-0 d-flex align-items-center gap-2">
+            회원가입
+            <div class="spinner-border spinner-border-sm text-info pyduck-htmx-indicator"
+                 role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </button>
+    </div>
+</form>

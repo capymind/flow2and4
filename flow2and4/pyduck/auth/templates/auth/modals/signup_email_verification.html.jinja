@@ -1,0 +1,29 @@
+<div class="modal-content rounded-0">
+    <div class="modal-header">
+        <h1 class="modal-title fw-bold fs-4" id="modalLabel">
+            <span class="logo-color"><i class="bi bi-tropical-storm"></i>pyduck</span>
+        </h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <div class="pt-3">
+            <span class="fw-bold fs-4">📨 인증메일 전송 완료</span>
+            <div class="pyduck-para pt-3 text-secondary">
+                [{{ user.nickname }}]님.
+                <br>[{{ user.username }}]으로 인증메일을 전송했습니다.
+                <br>메일 내의 인증 링크를 클릭하시면 회원가입이 완료됩니다.
+            </div>
+            <div class="pt-3 text-secondary">
+                <small>
+                    최대 3-5분 정도 소요 될 수 있으며, 기재하신 이메일 사이트 정책(예: 카카오)에 따라서
+                    스팸메일함으로 이동 될 수도 있습니다.
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline-dark rounded-0" data-bs-dismiss="modal" aria-label="Close">
+            창 닫기
+        </button>
+    </div>
+</div>

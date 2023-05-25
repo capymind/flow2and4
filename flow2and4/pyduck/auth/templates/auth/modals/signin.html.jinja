@@ -1,0 +1,72 @@
+<div class="modal-content rounded-0">
+    <div class=""
+         x-data="{ 
+            showUsernameDontExist: false,
+            showPasswordDontMatch: false,
+        }"
+         @username-dont-exist="showUsernameDontExist=true"
+         @password-dont-match="showPasswordDontMatch=true"
+         @hidden-bs-modal.dot.document="$el.remove()"
+         x-init="() => { htmx.process(document.body) }">
+        <form hx-post="{{ url_for('pyduck.auth.sign_in') }}" hx-swap="none">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header">
+                <h1 class="modal-title fw-bold fs-4" id="modalLabel">
+                    <span class="logo-color"><i class="bi bi-tropical-storm"></i>pyduck</span>
+                </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="pt-3">
+                        <span class="fw-bold fs-4">👋 어서오세요!!</span>
+                        <br>방문해주셔서 감사합니다.
+                    </div>
+                </div>
+                <div class="pt-4 col-lg-9">
+                    <div>
+                        <div class="form-floating">
+                            <input
+                                   type="email"
+                                   class="form-control rounded-0"
+                                   id="username"
+                                   name="username"
+                                   placeholder="guido@python.com"
+                                   @input="showUsernameDontExist=false"
+                                   required>
+                            <label for="username">이메일</label>
+                        </div>
+                        <div
+                             class="pt-1 ps-2 text-danger"
+                             x-show="showUsernameDontExist">
+                            <i class="bi bi-x-circle"></i><span class="ps-1">존재하지 않는 사용자입니다.</span>
+                        </div>
+                    </div>
+                    <div class="pt-3">
+                        <div class="form-floating">
+                            <input
+                                   type="password"
+                                   class="form-control rounded-0"
+                                   id="password"
+                                   name="password"
+                                   placeholder="비밀번호"
+                                   @input="showPasswordDontMatch=false"
+                                   required>
+                            <label for="password">비밀번호</label>
+                        </div>
+                        <div
+                             class="pt-1 ps-2 text-danger"
+                             x-show="showPasswordDontMatch">
+                            <i class="bi bi-x-circle"></i><span class="ps-1">비밀번호가 일치하지 않습니다.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-dark rounded-0">
+                    로그인
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

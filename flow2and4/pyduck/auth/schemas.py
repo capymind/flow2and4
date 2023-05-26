@@ -5,6 +5,9 @@ This is the module for defining schemas related to pyduck auth.
 UserVerificationEmailBase
     UserVerificationEmailCreate
     UserVerificationEmailRead
+UserForgotPasswordEmailVerificationBase
+    UserForgotPasswordEmailVerificationCreate
+    UserForgotPasswordEmailVerificationRead
 UserAvatarBase
     UserAvatarCrete
     UserAvatarRead
@@ -74,6 +77,24 @@ class UserVerificationEmailCreate(UserVerificationEmailBase):
 
 
 class UserVerificationEmailRead(UserVerificationEmailBase):
+    id: int
+
+
+class UserForgotPasswordEmailVerificationBase(PyduckSchema):
+    """Represent user's forgot password email verification."""
+
+    user_id: int
+    vcode: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserForgotPasswordEmailVerificationCreate(
+    UserForgotPasswordEmailVerificationBase
+):
+    pass
+
+
+class UserForgotPasswordEmailVerificationRead(UserForgotPasswordEmailVerificationBase):
     id: int
 
 

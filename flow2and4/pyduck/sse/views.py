@@ -6,10 +6,17 @@ This is the module for defining SSEs(Server-Sent Events).
 - https://github.com/sysid/sse-starlette/blob/master/sse_starlette/sse.py
 """
 
-from flask import Blueprint, current_app, stream_with_context, make_response, Response
-from redis import Redis
-import time
 import json
+import time
+
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    make_response,
+    stream_with_context
+)
+from redis import Redis
 
 
 class EventStream:

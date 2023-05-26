@@ -1,5 +1,39 @@
 """
 This is the module for handling database transactions related to pyduck auth.
+
+[service]
+does_field_value_exist
+create_user
+_get_user
+get_user
+delete_user
+get_pyduck_user_for_session
+get_user_by_username
+get_user_by_nickname
+create_user_avatar
+create_user_backdrop
+create_user_verification_email
+get_user_verification_email
+create_user_forgot_password_email_verification
+delete_user_forgot_password_email_verification
+verify_user
+update_about_me
+delete_and_create_user_sns
+_get_user_sns_by_user_id
+get_user_sns_by_user_id
+_get_user_avatar_by_user_id
+get_user_avatar_by_user_id
+_get_user_backdrop_by_user_id
+get_user_backdrop_by_user_id
+_get_user_backdrop
+update_user_backdrop
+_get_user_avatar
+update_user_avatar
+create_user_action
+delete_user_action
+get_all_user_actions_by_commons_and_action_types
+update_password
+update_nickname
 """
 
 from flask_sqlalchemy.pagination import Pagination
@@ -26,6 +60,7 @@ from flow2and4.pyduck.auth.models import (
     UserActionVoteQuestion,
     UserAvatar,
     UserBackdrop,
+    UserForgotPasswordEmailVerification,
     UserSns,
     UserVerificationEmail,
 )
@@ -53,6 +88,8 @@ from flow2and4.pyduck.auth.schemas import (
     UserBackdropRead,
     UserBackdropUpdate,
     UserCreate,
+    UserForgotPasswordEmailVerificationCreate,
+    UserForgotPasswordEmailVerificationRead,
     UserRead,
     UserReadForSession,
     UserSnsCreate,
@@ -96,6 +133,14 @@ def get_user(*, id: int) -> UserRead | None:
     return UserRead.from_orm(user) if user else None
 
 
+def delete_user(*, id: int) -> None:
+    """Delete user in table."""
+
+    user = _get_user(id)
+    db.session.delete(user)
+    db.session.commit()
+
+
 def get_pyduck_user_for_session(*, id: int) -> UserReadForSession:
     """Select user for sign-in session."""
     user = _get_user(id=id)
@@ -108,6 +153,14 @@ def get_user_by_username(*, username: str) -> UserReadForSession | None:
     user = db.session.scalars(select(User).filter_by(username=username)).one_or_none()
 
     return UserReadForSession.from_orm(user) if user is not None else None
+
+
+def get_user_by_nickname(*, nickname: str) -> UserRead | None:
+    """Select user by username for sign-in session."""
+
+    user = db.session.scalars(select(User).filter_by(nickname=nickname)).one_or_none()
+
+    return UserRead.from_orm(user) if user is not None else None
 
 
 def create_user_avatar(*, avatar_in: UserAvatarCreate) -> UserAvatarRead:
@@ -143,6 +196,26 @@ def create_user_verification_email(
     return UserVerificationEmailRead.from_orm(verification)
 
 
+def create_user_forgot_password_email_verification(
+    *, verification_in: UserForgotPasswordEmailVerificationCreate
+) -> None:
+    """Insert user forgot password email verification in table."""
+
+    verification = UserForgotPasswordEmailVerification(**verification_in.dict())
+
+    db.session.add(verification)
+    db.session.commit()
+
+
+def delete_user_forgot_password_email_verification(*, user_id: int) -> None:
+    """Delete user forgot password email verification in table."""
+
+    verification = _get_user_forgot_password_email_verification(user_id)
+    if verification is not None:
+        db.session.delete(verification)
+        db.session.commit()
+
+
 def get_user_verification_email(*, user_id: int) -> UserVerificationEmailRead | None:
     """Select user verification email."""
 
@@ -152,6 +225,26 @@ def get_user_verification_email(*, user_id: int) -> UserVerificationEmailRead | 
 
     return (
         UserVerificationEmailRead.from_orm(verification)
+        if verification is not None
+        else None
+    )
+
+
+def _get_user_forgot_password_email_verification(user_id):
+    return db.session.scalars(
+        select(UserForgotPasswordEmailVerification).filter_by(user_id=user_id)
+    ).one_or_none()
+
+
+def get_user_forgot_password_email_verification(
+    *, user_id: int
+) -> UserForgotPasswordEmailVerificationRead | None:
+    """Select user's forgot password email verification."""
+
+    verification = _get_user_forgot_password_email_verification(user_id)
+
+    return (
+        UserForgotPasswordEmailVerificationRead.from_orm(verification)
         if verification is not None
         else None
     )
@@ -427,3 +520,19 @@ def get_all_user_actions_by_commons_and_action_types(
     select_ = select_.order_by(*sorter_conditions)
 
     return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)
+
+
+def update_password(user_id: int, password: str) -> None:
+    """Update user's password."""
+
+    user = _get_user(user_id)
+    user.password = password
+    db.session.commit()
+
+
+def update_nickname(user_id: int, nickname: str) -> None:
+    """Update user's nickname."""
+
+    user = _get_user(user_id)
+    user.nickname = nickname
+    db.session.commit()

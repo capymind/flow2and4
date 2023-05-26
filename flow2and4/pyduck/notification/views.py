@@ -4,13 +4,14 @@ This is the module for handling all requests related to pyduck notificaton.
 
 from http import HTTPMethod
 
-from flask import Blueprint, render_template, make_response
+from flask import Blueprint, make_response, render_template
 from flask_login import login_required
-from flow2and4.pyduck.schemas import CommonParameters
+
 from flow2and4.pyduck.notification.service import (
     get_all_notifications_by_commons,
-    mark_all_unread_notifications_as_read,
+    mark_all_unread_notifications_as_read
 )
+from flow2and4.pyduck.schemas import CommonParameters
 
 bp = Blueprint(
     "notification",

@@ -53,7 +53,7 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for,
+    url_for
 )
 from flask_login import current_user, login_required
 from pydantic import ValidationError
@@ -74,9 +74,12 @@ from flow2and4.pyduck.auth.schemas import (
     UserActionVoteAnswerCreate,
     UserActionVotePostCommentCreate,
     UserActionVotePostCreate,
-    UserActionVoteQuestionCreate,
+    UserActionVoteQuestionCreate
 )
-from flow2and4.pyduck.auth.service import create_user_action, delete_user_action
+from flow2and4.pyduck.auth.service import (
+    create_user_action,
+    delete_user_action
+)
 from flow2and4.pyduck.community.helpers import date_filters
 from flow2and4.pyduck.community.schemas import (
     AnswerCommentCreate,
@@ -101,7 +104,7 @@ from flow2and4.pyduck.community.schemas import (
     QuestionReactionCreate,
     QuestionTagCreate,
     QuestionUpdate,
-    QuestionVoteCreate,
+    QuestionVoteCreate
 )
 from flow2and4.pyduck.community.service import (
     create_answer,
@@ -162,7 +165,7 @@ from flow2and4.pyduck.community.service import (
     update_answer_comment_adding_history,
     update_post_adding_history,
     update_post_comment_adding_history,
-    update_question_adding_history,
+    update_question_adding_history
 )
 from flow2and4.pyduck.notification.schemas import (
     NotificationForAnswerCommentCreate,
@@ -176,15 +179,15 @@ from flow2and4.pyduck.notification.schemas import (
     NotificationForPostReactionCreate,
     NotificationForPostVoteCreate,
     NotificationForQuestionReactionCreate,
-    NotificationForQuestionVoteCreate,
+    NotificationForQuestionVoteCreate
 )
 from flow2and4.pyduck.notification.service import (
     create_notification,
-    delete_notification,
+    delete_notification
 )
 from flow2and4.pyduck.schemas import CommonParameters
-from flow2and4.pyduck.sse.views import bp as sse, EventStream
-
+from flow2and4.pyduck.sse.views import EventStream
+from flow2and4.pyduck.sse.views import bp as sse
 
 logger = logging.getLogger(__name__)
 

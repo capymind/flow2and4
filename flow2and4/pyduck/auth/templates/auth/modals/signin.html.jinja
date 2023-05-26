@@ -1,4 +1,4 @@
-<div class="modal-content rounded-0">
+<div class="modal-content rounded-0" hx-target="this">
     <div class=""
          x-data="{ 
             showUsernameDontExist: false,
@@ -59,6 +59,15 @@
                              x-show="showPasswordDontMatch">
                             <i class="bi bi-x-circle"></i><span class="ps-1">비밀번호가 일치하지 않습니다.</span>
                         </div>
+                    </div>
+                    <div class="pt-3 text-secondary">
+                        비밀번호가 기억 안나시나요?
+                        <a class="link"
+                           href="#"
+                           hx-get="{{ url_for('pyduck.auth.forgot_password') }}"
+                           hx-swap="outerHTML">
+                            비밀번호 찾기
+                        </a>
                     </div>
                 </div>
             </div>

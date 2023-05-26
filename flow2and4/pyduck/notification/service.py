@@ -10,18 +10,20 @@ get_all_unread_notifications
 make_unread_notification_read
 """
 
-from sqlalchemy import select
 from flask_login import current_user
+from flask_sqlalchemy.pagination import Pagination
+from sqlalchemy import select
+
 from flow2and4.database import db
 from flow2and4.pyduck.notification.models import (
+    Notification,
     NotificationForAnswerCommentReaction,
     NotificationForAnswerReaction,
     NotificationForPostComment,
     NotificationForPostCommentReaction,
     NotificationForPostReaction,
     NotificationForPostVote,
-    NotificationForQuestionReaction,
-    Notification,
+    NotificationForQuestionReaction
 )
 from flow2and4.pyduck.notification.schemas import (
     NotificationForAnswerCommentReactionCreate,
@@ -30,9 +32,8 @@ from flow2and4.pyduck.notification.schemas import (
     NotificationForPostCommentReactionCreate,
     NotificationForPostReactionCreate,
     NotificationForPostVoteCreate,
-    NotificationForQuestionReactionCreate,
+    NotificationForQuestionReactionCreate
 )
-from flask_sqlalchemy.pagination import Pagination
 
 
 def create_notification(*, notification_in):

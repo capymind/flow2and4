@@ -8,11 +8,24 @@ This is the module for handling requests related to pyduck auth.
 /sign-up/welcome                        -> welcome
 /sign-in                                -> sign_in
 /sign-out                               -> sign_out
+
+/goodbye                                -> goodbye
+
+/forgot-password                        -> forgot_password
+/forgot-password/verification           -> forgot_password_verification
+/reset-password                         -> reset_password
+/reset-password/done                    -> reset_password_done
+
 /profile/settings                       -> profile_setting
 /me/about_me                            -> about_me
 /me/sns                                 -> sns
 /me/backdrop                            -> backdrop
 /me/avatar                              -> avatar
+
+/me/account                             -> my_account
+/me/account/password                    -> my_password
+/me/account/nickname                    -> my_nickname
+
 
 /me/activity                            -> my_activity
 /me/activity/questions-and-posts        -> my_activity_about_question_and_post
@@ -21,12 +34,12 @@ This is the module for handling requests related to pyduck auth.
 /me/activity/reactions                  -> my_activity_about_reaction
 """
 
-import time
 import json
 import os
+import time
 import uuid
 from http import HTTPMethod, HTTPStatus
-
+from datetime import datetime, timezone, timedelta
 from flask import (
     Blueprint,
     abort,
@@ -41,12 +54,14 @@ from flask_login import current_user, login_required, login_user, logout_user
 from pydantic import ValidationError
 from werkzeug.utils import secure_filename
 
+from flow2and4.pyduck.auth.helpers import validate_plain_password, validate_nickname
 from flow2and4.pyduck.auth.schemas import (
     UserAvatarCreate,
     UserAvatarUpdate,
     UserBackdropCreate,
     UserBackdropUpdate,
     UserCreate,
+    UserForgotPasswordEmailVerificationCreate,
     UserSnsCreate,
     UserVerificationEmailCreate,
 )
@@ -54,25 +69,35 @@ from flow2and4.pyduck.auth.service import (
     create_user,
     create_user_avatar,
     create_user_backdrop,
+    create_user_forgot_password_email_verification,
     create_user_verification_email,
     delete_and_create_user_sns,
+    delete_user_forgot_password_email_verification,
     does_field_value_exist,
     get_all_user_actions_by_commons_and_action_types,
     get_user_avatar_by_user_id,
     get_user_backdrop_by_user_id,
     get_user_by_username,
+    get_user_forgot_password_email_verification,
     get_user_sns_by_user_id,
     get_user_verification_email,
     update_about_me,
+    update_password,
     update_user_avatar,
     update_user_backdrop,
     verify_user,
+    delete_user,
+    update_nickname,
+    get_user_by_nickname,
+)
+from flow2and4.pyduck.auth.tasks import (
+    send_forgot_password_email,
+    send_sign_up_verification_email,
 )
 from flow2and4.pyduck.community.service import (
     get_all_reactions_by_commons,
     get_all_votes_by_commons,
 )
-from flow2and4.pyduck.auth import tasks
 from flow2and4.pyduck.schemas import CommonParameters
 
 bp = Blueprint(
@@ -139,7 +164,7 @@ def sign_up():
         )
         create_user_verification_email(verification_in=verification_in)
 
-        tasks.send_sign_up_verification_email.delay(user.id)
+        send_sign_up_verification_email.delay(user.id)
         time.sleep(3.0)  # faked delay for sending an email.
 
         res = make_response(
@@ -225,12 +250,198 @@ def sign_in():
 
 
 @bp.route("/sign-out", methods=[HTTPMethod.GET])
+@login_required
 def sign_out():
     """Sign user out."""
 
     logout_user()
 
     return redirect(url_for("pyduck.index"))
+
+
+@bp.route("/goodbye", methods=[HTTPMethod.GET, HTTPMethod.DELETE])
+def goodbye():
+    """Delete user and redirect say goodbye page."""
+
+    if request.method == HTTPMethod.DELETE:
+        if not current_user.is_authenticated:
+            abort(HTTPStatus.UNAUTHORIZED)
+
+        password = request.form.get("password")
+        confirm = request.form.get("confirm")
+
+        if confirm != "탈퇴하는데 동의합니다":
+            abort(HTTPStatus.BAD_REQUEST)
+
+        user = get_user_by_username(username=current_user.username)
+        res = make_response()
+
+        if not check_password_hash(user.password, password):
+            res.headers["HX-Trigger"] = "password-dont-match"
+            return res, HTTPStatus.UNAUTHORIZED
+        else:
+            logout_user()
+            delete_user(id=user.id)
+            res.headers["HX-Redirect"] = url_for("pyduck.auth.goodbye")
+            return res
+
+    return render_template("auth/goodbye.html.jinja")
+
+
+@bp.route("/forgot-password", methods=[HTTPMethod.GET, HTTPMethod.POST])
+def forgot_password():
+    """
+    (GET) Show forgot password modal.
+    """
+
+    if request.method == HTTPMethod.GET:
+        return render_template("auth/modals/forgot_password.html.jinja")
+
+    if request.method == HTTPMethod.POST:
+        username = request.form.get("username")
+        if username is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        user = get_user_by_username(username=username)
+        if user is None:
+            res = make_response()
+            res.headers["HX-Trigger"] = "username-dont-exist"
+            return res, HTTPStatus.NOT_FOUND
+        else:
+            verification_in = UserForgotPasswordEmailVerificationCreate(
+                user_id=user.id, vcode=uuid.uuid4().hex
+            )
+            create_user_forgot_password_email_verification(
+                verification_in=verification_in
+            )
+
+            send_forgot_password_email.delay(user.id)
+            time.sleep(3.0)  # faked delay for sending email.
+
+            res = make_response(
+                render_template(
+                    "auth/modals/forgot_password_verification.html.jinja", user=user
+                )
+            )
+
+            return res
+
+
+@bp.route("/forgot-password/verification", methods=[HTTPMethod.GET])
+def forgot_password_verification():
+    """
+    (GET) Process forgot password verification.
+    """
+
+    username = request.args.get("username")
+    vcode = request.args.get("vcode")
+
+    if username is None or vcode is None:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    user = get_user_by_username(username=username)
+    if user is None:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    verification = get_user_forgot_password_email_verification(user_id=user.id)
+
+    if verification is None:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    if vcode != verification.vcode:
+        abort(HTTPStatus.BAD_REQUEST)
+
+    elapsed = datetime.now(timezone.utc) - verification.created_at
+    expired = elapsed / timedelta(minutes=1) > 10
+
+    if expired:
+        abort(HTTPStatus.GONE)
+    else:
+        return redirect(
+            url_for(
+                "pyduck.auth.reset_password",
+                username=user.username,
+                vcode=verification.vcode,
+            )
+        )
+
+
+@bp.route("/reset-password", methods=[HTTPMethod.GET, HTTPMethod.PUT])
+def reset_password():
+    """
+    (GET) Show reset password page only after verifying forgot pasword stage.
+    (PUT) Process reset password.
+    """
+
+    if request.method == HTTPMethod.GET:
+        username = request.args.get("username")
+        vcode = request.args.get("vcode")
+
+        if username is None or vcode is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        user = get_user_by_username(username=username)
+        if user is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        verification = get_user_forgot_password_email_verification(user_id=user.id)
+
+        if verification is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        if vcode != verification.vcode:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        elapsed = datetime.now(timezone.utc) - verification.created_at
+        expired = elapsed / timedelta(minutes=1) > 10
+
+        if expired:
+            delete_user_forgot_password_email_verification(user_id=user.id)
+            abort(HTTPStatus.GONE)
+        else:
+            return render_template(
+                "auth/reset_password.html.jinja", user=user, verification=verification
+            )
+
+    if request.method == HTTPMethod.PUT:
+        newpassword = request.form.get("newpassword")
+        username = request.form.get("username")
+        vcode = request.form.get("vcode")
+
+        if username is None or vcode is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        user = get_user_by_username(username=username)
+        if user is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        verification = get_user_forgot_password_email_verification(user_id=user.id)
+
+        if verification is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        if vcode != verification.vcode:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        valid = validate_plain_password(newpassword)
+
+        if not valid:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        update_password(user_id=user.id, password=generate_password_hash(newpassword))
+        delete_user_forgot_password_email_verification(user_id=user.id)
+        res = make_response()
+        res.headers["HX-Redirect"] = url_for("pyduck.auth.reset_password_done")
+        return res
+
+
+@bp.route("/reset-password/done", methods=[HTTPMethod.GET])
+def reset_password_done():
+    """
+    (GET) Show reset password done page.
+    """
+
+    return render_template("auth/reset_password_done.html.jinja")
 
 
 @bp.route("/profile/settings", methods=[HTTPMethod.GET])
@@ -415,6 +626,77 @@ def avatar():
     res.headers["HX-Trigger-After-Settle"] = "avatar-modified-successfully"
 
     return res, HTTPStatus.OK
+
+
+@bp.route("/me/account", methods=[HTTPMethod.GET])
+@login_required
+def my_account():
+    """
+    (GET) Show my account index page.
+    """
+
+    return render_template("/auth/account/index.html.jinja")
+
+
+@bp.route("/me/account/password", methods=[HTTPMethod.PUT])
+@login_required
+def my_password():
+    """
+    (PUT) Change my password.
+    """
+
+    oldpassword = request.form.get("oldpassword")
+    newpassword = request.form.get("newpassword")
+
+    valid = validate_plain_password(newpassword)
+
+    if not check_password_hash(current_user.password, oldpassword):
+        res = make_response()
+        res.headers["HX-Trigger"] = "password-dont-match"
+        return res, HTTPStatus.UNAUTHORIZED
+    else:
+        if not valid:
+            res = make_response()
+            return res, HTTPStatus.BAD_REQUEST
+        else:
+            res = make_response(render_template("auth/account/password.html.jinja"))
+            update_password(
+                user_id=current_user.id, password=generate_password_hash(newpassword)
+            )
+            res.headers["HX-Reswap"] = "outerHTML"
+            res.headers["HX-Trigger"] = "password-changed-successfully"
+            return res
+
+
+@bp.route("/me/account/nickname", methods=[HTTPMethod.PUT])
+@login_required
+def my_nickname():
+    """
+    (PUT) Change my nickname.
+    """
+
+    nickname = request.form.get("nickname")
+
+    valid = validate_nickname(nickname)
+
+    if not valid:
+        res = make_response()
+        return res, HTTPStatus.BAD_REQUEST
+
+    if get_user_by_nickname(nickname=nickname) is not None:
+        res = make_response()
+        res.headers["HX-Trigger"] = "nickname-already-exists"
+        return res, HTTPStatus.CONFLICT
+
+    update_nickname(user_id=current_user.id, nickname=nickname)
+
+    res = make_response(
+        render_template("auth/account/nickname.html.jinja", nickname=nickname)
+    )
+    res.headers["HX-Reswap"] = "outerHTML"
+    res.headers["HX-Trigger-After-Swap"] = "nickname-changed-successfully"
+
+    return res
 
 
 @bp_user.route("/me/activity", methods=[HTTPMethod.GET])

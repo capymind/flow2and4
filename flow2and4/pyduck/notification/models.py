@@ -29,10 +29,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from flow2and4.database import db
 from flow2and4.pyduck.auth.models import User
 from flow2and4.pyduck.community.models import (
-    PostVote,
     Post,
     PostComment,
     PostCommentReaction,
+    PostVote
 )
 
 

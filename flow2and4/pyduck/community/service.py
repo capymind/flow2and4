@@ -34,7 +34,7 @@ from flow2and4.pyduck.community.models import (
     QuestionTag,
     QuestionVote,
     Reaction,
-    Vote,
+    Vote
 )
 from flow2and4.pyduck.community.schemas import (
     AnswerCommentCreate,
@@ -80,7 +80,7 @@ from flow2and4.pyduck.community.schemas import (
     QuestionTagRead,
     QuestionUpdate,
     QuestionVoteCreate,
-    QuestionVoteRead,
+    QuestionVoteRead
 )
 
 

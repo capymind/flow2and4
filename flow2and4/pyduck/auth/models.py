@@ -7,6 +7,7 @@ UserBackdrop
 UserSns
 User
 UserVerificationEmail
+UserForgotPasswordEmailVerification
 UserAction
     UserActionCreatePost
     UserActionCreatePostComment
@@ -127,6 +128,20 @@ class UserVerificationEmail(db.Model):
     user: Mapped[User] = relationship("pyduck.auth.models.User")
 
 
+class UserForgotPasswordEmailVerification(db.Model):
+    """Represent user's forgot password email verification."""
+
+    __bind_key__ = "pyduck"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True)
+    vcode: Mapped[str]
+    created_at: Mapped[str]
+
+    # relationship
+    user: Mapped[User] = relationship("pyduck.auth.models.User")
+
+
 class UserAction(db.Model):
     """Represent user action."""
 
@@ -234,7 +249,8 @@ class UserActionVoteQuestion(UserActionVote):
 
     # relationship.
     question: Mapped[Question] = relationship(
-        "Question", primaryjoin="foreign(UserActionVoteQuestion.target_id) == Question.id"
+        "Question",
+        primaryjoin="foreign(UserActionVoteQuestion.target_id) == Question.id",
     )
 
 

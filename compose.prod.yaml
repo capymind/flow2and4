@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile.prod
     volumes:
+      - .:/app
       - ./flow2and4:/app/flow2and4
       - ./instance:/app/instance
     expose:
@@ -43,6 +44,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
+      - .:/app
       - type: bind
         source: ./flow2and4
         target: /app/flow2and4

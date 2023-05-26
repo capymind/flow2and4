@@ -1,0 +1,67 @@
+<form class="pt-5"
+      hx-put="{{ url_for('pyduck.auth.my_nickname') }}"
+      hx-swap="none"
+      hx-target="this"
+      x-cloak
+      x-data="{
+        oldnickname: '{{ nickname or current_user.nickname }}',
+        nickname: '',
+        showNicknameExist: false,
+        get isValidNickname() {
+            return /^[가-힣a-zA-Z0-9-_]{2,20}$/.test(this.nickname)
+        }
+      }"
+      @nickname-already-exists="showNicknameExist=true"
+      @nickname-changed-successfully.document="nickname=$event.detail.value">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="p-3 border rounded-2">
+        <h1 class="fs-5 fw-bold">
+            닉네임 변경하기
+        </h1>
+        <hr>
+        <div class="pt-1">
+            <div>
+                <label for="oldnickname" class="form-label">현재 닉네임</label>
+                <input
+                       x-model="oldnickname"
+                       class="form-control"
+                       id="oldnickname"
+                       type="text"
+                       disabled
+                       readonly>
+            </div>
+            <div class="pt-3">
+                <label for="nickname" class="form-label">
+                    새 닉네임
+                </label>
+                <input
+                       x-model="nickname"
+                       type="text"
+                       class="form-control"
+                       id="nickname"
+                       name="nickname"
+                       minlength="2"
+                       maxlength="20"
+                       @input="nickname=nickname.replaceAll(' ', ''); showNicknameExist=false"
+                       placeholder="2-20자, 정상적인 한글, 영문자, 숫자, -, _만 가능"
+                       required>
+                <template x-if="showNicknameExist">
+                    <div class="pt-1 ps-2 text-danger">
+                        <i class="bi bi-x-circle"></i><span class="ps-1">이미 누군가가 사용 중인 닉네임입니다.</span>
+                    </div>
+                </template>
+            </div>
+        </div>
+        <div class="pt-3">
+            닉네임은 어떻게 보면 현실에서의 이름과도 같은데요.
+            <br>그래서 잦은 변경은 권장하지 않습니다 :)
+        </div>
+        <div class="pt-4 text-end">
+            <button
+                    class="btn btn-primary rounded-0"
+                    :disabled="!isValidNickname">
+                닉네임 변경하기
+            </button>
+        </div>
+    </div>
+</form>

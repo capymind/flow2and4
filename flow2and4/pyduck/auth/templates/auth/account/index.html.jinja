@@ -1,0 +1,87 @@
+{% extends "pyduck/base.html.jinja" %}
+
+
+{% block main %}
+<div class="container">
+    <div class="row pt-5">
+        <div class="col-12 text-center">
+            <div class="display-4">
+                <i class="bi bi-person-gear"></i>
+            </div>
+            <div>
+                <h1 class="fs-2 fw-bold">내 계정 관리</h1>
+                <p class="pt-3 text-secondary">
+                    닉네임 변경, 비밀번호 변경 등
+                    <br>내 계정을 편하게 관리해보세요 :)
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="row py-5">
+        <div class="
+                col-12 order-2
+                col-lg-6 order-lg-1">
+            {% include "auth/account/nickname.html.jinja" %}
+            {% include "auth/account/password.html.jinja" %}
+            {% include "auth/account/goodbye.html.jinja" %}
+        </div>
+    </div>
+</div>
+{% endblock main %}
+
+
+{% block toast_manager %}
+<div class="toast-manager fixed-top"
+     x-data="{
+        handlePassword() {
+            let toast = bootstrap.Toast.getOrCreateInstance(
+                document.querySelector('#passwordToast')
+            )
+            toast.show()
+        },
+        handleNickname() {
+            let toast = bootstrap.Toast.getOrCreateInstance(
+                document.querySelector('#nicknameToast')
+            )
+            toast.show()
+        }
+    }"
+     @password-changed-successfully.document="handlePassword"
+     @nickname-changed-successfully.document="handleNickname">
+    <div class="toast-container p-3 top-0 end-0">
+        <div id="passwordToast" class="toast text-bg-success" role="alert" aria-live="assertive"
+             aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-lightbulb"></i>
+                <strong class="me-auto ps-1">알림</strong>
+                <small>방금 전</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                비밀번호가 성공적으로 변경되었습니다.
+            </div>
+        </div>
+    </div>
+    <div class="toast-container p-3 top-0 end-0">
+        <div id="nicknameToast" class="toast text-bg-success" role="alert" aria-live="assertive"
+             aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-lightbulb"></i>
+                <strong class="me-auto ps-1">알림</strong>
+                <small>방금 전</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                닉네임이 성공적으로 변경되었습니다.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock toast_manager %}
+
+{% block javascript %}
+{{ super() }}
+<script>
+
+</script>
+{% endblock javascript %}

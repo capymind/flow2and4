@@ -1,0 +1,67 @@
+<form class="pt-5"
+      hx-delete="{{ url_for('pyduck.auth.goodbye') }}"
+      hx-swap="none"
+      x-cloak
+      x-data="{
+        password: '',
+        confirm: '',
+        showPasswordDontMatch: false,
+        get showConfirmDontMatch() {
+            return this.confirm.length > 0 && this.confirm !== '탈퇴하는데 동의합니다'
+        }
+      }"
+      @password-dont-match="showPasswordDontMatch=true">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="p-3 border rounded-2">
+        <h1 class="fs-5 fw-bold text-danger">
+            회원탈퇴하기
+        </h1>
+        <hr>
+        <div class="pt-1">
+            <div>
+                <label for="password" class="form-label">비밀번호 확인</label>
+                <input
+                       x-model="password"
+                       type="password"
+                       class="form-control"
+                       id="password"
+                       name="password"
+                       @input="showPasswordDontMatch=false"
+                       required>
+                <template x-if="showPasswordDontMatch">
+                    <div class="pt-1 ps-2 text-danger">
+                        <i class="bi bi-x-circle"></i><span class="ps-1">비밀번호가 일치하지 않습니다.</span>
+                    </div>
+                </template>
+            </div>
+            <div class="pt-3">
+                <label for="newpassword1" class="form-label">
+                    회원탈퇴 의사 확인
+                </label>
+                <input
+                       x-model="confirm"
+                       name="confirm"
+                       type="text"
+                       class="form-control"
+                       id="confirm"
+                       required>
+                <div class="pt-2">
+                    정말로 희망하신다면
+                    [<span class="fw-bold text-danger-emphasis">탈퇴하는데 동의합니다</span>]
+                    라는 문구를 적어주세요.
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 pt-2 border-top">
+            지금까지 활동하신 모든 내용이 10일 뒤에 모두 삭제되며, 복구할 수 없습니다.
+            (그 어떠한 형태로도 서버에 남아있지 않습니다.)
+        </div>
+        <div class="pt-4 text-end">
+            <button
+                    class="btn btn-danger rounded-0"
+                    :disabled="password.length === 0 || confirm !== '탈퇴하는데 동의합니다'">
+                회원 탈퇴하기
+            </button>
+        </div>
+    </div>
+</form>

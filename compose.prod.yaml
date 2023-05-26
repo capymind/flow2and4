@@ -22,7 +22,7 @@ services:
       - ./docker/certbot/www:/var/www/certbot
     depends_on:
       - web
-  
+
   redis:
     image: redis:latest
     expose:
@@ -34,3 +34,21 @@ services:
       retries: 50
       start_period: 30s
     restart: always
+
+  worker:
+    container_name: worker
+    environment:
+      - CELERY_MODE=prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - type: bind
+        source: ./flow2and4
+        target: /app/flow2and4
+      - type: bind
+        source: ./instance
+        target: /app/instance
+    command: celery -A make_celery worker --loglevel INFO
+    depends_on:
+      - redis

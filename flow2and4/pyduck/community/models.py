@@ -48,6 +48,29 @@ assoc_post_tag_table = db.Table(
 )
 
 
+class Writing(db.Model):
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id = mapped_column(ForeignKey("user.id"))
+    type: Mapped[str]
+    category: Mapped[str]
+    title: Mapped[str]
+    content: Mapped[str]
+    view_count: Mapped[int]
+    vote_count: Mapped[int]
+    comment_count: Mapped[int]
+    created_at: Mapped[str]
+    updated_at: Mapped[str | None]
+    deleted_at: Mapped[str | None]
+    choco: Mapped[str | None]
+
+    __bind_key__ = "pyduck"
+    __mapper_args__ = {
+        "polymorphic_on": "type",
+        "polymorphic_identity": "writing",
+    }
+
+
 class Vote(db.Model):
     """Represent vote."""
 
@@ -206,39 +229,31 @@ class QuestionHistory(db.Model):
     created_at: Mapped[str]
 
 
-class Question(db.Model):
+class Question(Writing):
     """Represent question."""
 
-    __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    title: Mapped[str]
-    content: Mapped[str]
-    view_count: Mapped[int]
-    vote_count: Mapped[int]
-    comment_count: Mapped[int]
     answered: Mapped[bool]
-    created_at: Mapped[str]
-    updated_at: Mapped[str | None]
-    deleted_at: Mapped[str | None]
+    answer_count: Mapped[int]
 
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
-    tags: Mapped[list[QuestionTag]] = relationship(
-        secondary=assoc_question_tag_table, back_populates="questions"
-    )
-    history: Mapped[list[QuestionHistory]] = relationship()
-    votes: Mapped[list[QuestionVote]] = relationship(
-        "QuestionVote",
-        primaryjoin="Question.id == foreign(QuestionVote.target_id)",
-        viewonly=True,
-    )
-    reactions: Mapped[list[QuestionReaction]] = relationship(
-        "QuestionReaction",
-        primaryjoin="Question.id == foreign(QuestionReaction.target_id)",
-        viewonly=True,
-    )
+    __bind_key__ = "pyduck"
+    __mapper_args__ = {"polymorphic_identity": "question"}
+
+    # # relationship.
+    # user: Mapped[User] = relationship("pyduck.auth.models.User")
+    # tags: Mapped[list[QuestionTag]] = relationship(
+    #     secondary=assoc_question_tag_table, back_populates="questions"
+    # )
+    # history: Mapped[list[QuestionHistory]] = relationship()
+    # votes: Mapped[list[QuestionVote]] = relationship(
+    #     "QuestionVote",
+    #     primaryjoin="Question.id == foreign(QuestionVote.target_id)",
+    #     viewonly=True,
+    # )
+    # reactions: Mapped[list[QuestionReaction]] = relationship(
+    #     "QuestionReaction",
+    #     primaryjoin="Question.id == foreign(QuestionReaction.target_id)",
+    #     viewonly=True,
+    # )
 
 
 class QuestionTag(db.Model):
@@ -355,37 +370,28 @@ class PostHistory(db.Model):
     created_at: Mapped[str]
 
 
-class Post(db.Model):
+class Post(Writing):
     """Represent post."""
 
     __bind_key__ = "pyduck"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id = mapped_column(ForeignKey("user.id"))
-    category: Mapped[str] = mapped_column(index=True)
-    title: Mapped[str]
-    content: Mapped[str]
-    view_count: Mapped[int]
-    vote_count: Mapped[int]
-    comment_count: Mapped[int]
-    created_at: Mapped[str]
-    updated_at: Mapped[str | None]
-    deleted_at: Mapped[str | None]
-
-    # relationship.
-    user: Mapped[User] = relationship("pyduck.auth.models.User")
-    tags: Mapped[list[PostTag]] = relationship(
-        secondary=assoc_post_tag_table, back_populates="posts"
-    )
-    history: Mapped[list[PostHistory]] = relationship()
-    votes: Mapped[list[PostVote]] = relationship(
-        "PostVote", primaryjoin="Post.id == foreign(PostVote.target_id)", viewonly=True
-    )
-    reactions: Mapped[list[PostReaction]] = relationship(
-        "PostReaction",
-        primaryjoin="Post.id == foreign(PostReaction.target_id)",
-        viewonly=True,
-    )
+    __mapper_args__ = {"polymorphic_identity": "post"}
+   
+    subcomment_count: Mapped[int]
+ 
+    # # relationship.
+    # user: Mapped[User] = relationship("pyduck.auth.models.User")
+    # tags: Mapped[list[PostTag]] = relationship(
+    #     secondary=assoc_post_tag_table, back_populates="posts"
+    # )
+    # history: Mapped[list[PostHistory]] = relationship()
+    # votes: Mapped[list[PostVote]] = relationship(
+    #     "PostVote", primaryjoin="Post.id == foreign(PostVote.target_id)", viewonly=True
+    # )
+    # reactions: Mapped[list[PostReaction]] = relationship(
+    #     "PostReaction",
+    #     primaryjoin="Post.id == foreign(PostReaction.target_id)",
+    #     viewonly=True,
+    # )
 
 
 class PostTag(db.Model):

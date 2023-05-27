@@ -53,7 +53,7 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for
+    url_for,
 )
 from flask_login import current_user, login_required
 from pydantic import ValidationError
@@ -74,12 +74,9 @@ from flow2and4.pyduck.auth.schemas import (
     UserActionVoteAnswerCreate,
     UserActionVotePostCommentCreate,
     UserActionVotePostCreate,
-    UserActionVoteQuestionCreate
+    UserActionVoteQuestionCreate,
 )
-from flow2and4.pyduck.auth.service import (
-    create_user_action,
-    delete_user_action
-)
+from flow2and4.pyduck.auth.service import create_user_action, delete_user_action
 from flow2and4.pyduck.community.helpers import date_filters
 from flow2and4.pyduck.community.schemas import (
     AnswerCommentCreate,
@@ -104,7 +101,7 @@ from flow2and4.pyduck.community.schemas import (
     QuestionReactionCreate,
     QuestionTagCreate,
     QuestionUpdate,
-    QuestionVoteCreate
+    QuestionVoteCreate,
 )
 from flow2and4.pyduck.community.service import (
     create_answer,
@@ -160,12 +157,13 @@ from flow2and4.pyduck.community.service import (
     get_question_reaction,
     get_question_vote,
     mark_answer_as_answered,
+    get_all_writings_by_commons,
     mark_answer_as_unanswered,
     update_answer_adding_history,
     update_answer_comment_adding_history,
     update_post_adding_history,
     update_post_comment_adding_history,
-    update_question_adding_history
+    update_question_adding_history,
 )
 from flow2and4.pyduck.notification.schemas import (
     NotificationForAnswerCommentCreate,
@@ -179,11 +177,11 @@ from flow2and4.pyduck.notification.schemas import (
     NotificationForPostReactionCreate,
     NotificationForPostVoteCreate,
     NotificationForQuestionReactionCreate,
-    NotificationForQuestionVoteCreate
+    NotificationForQuestionVoteCreate,
 )
 from flow2and4.pyduck.notification.service import (
     create_notification,
-    delete_notification
+    delete_notification,
 )
 from flow2and4.pyduck.schemas import CommonParameters
 from flow2and4.pyduck.sse.views import EventStream
@@ -227,13 +225,24 @@ def index(category: str):
             category=category,
         )
 
+    if category == "all":
+        pagination = get_all_writings_by_commons(**commons.dict())
+
+        return render_template(
+            "community/index/index.html.jinja",
+            post_pagination=pagination,
+            date_filters=date_filters,
+            category=category,
+            commons=commons,
+        )
+
     else:
         post_pagination = get_all_posts_by_commons_and_category(
             **commons.dict(), category=category
         )
 
         return render_template(
-            f"community/index/index.html.jinja",
+            "community/index/index.html.jinja",
             post_pagination=post_pagination,
             date_filters=date_filters,
             category=category,

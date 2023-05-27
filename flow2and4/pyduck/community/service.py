@@ -4,7 +4,7 @@ This is the module for handling database transactions related to pyduck communit
 
 from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy import or_, select
-from sqlalchemy.orm import with_parent
+from sqlalchemy.orm import with_parent, with_polymorphic
 
 from flow2and4.database import db
 from flow2and4.pyduck.auth.models import User
@@ -34,7 +34,8 @@ from flow2and4.pyduck.community.models import (
     QuestionTag,
     QuestionVote,
     Reaction,
-    Vote
+    Vote,
+    Writing
 )
 from flow2and4.pyduck.community.schemas import (
     AnswerCommentCreate,
@@ -80,7 +81,7 @@ from flow2and4.pyduck.community.schemas import (
     QuestionTagRead,
     QuestionUpdate,
     QuestionVoteCreate,
-    QuestionVoteRead
+    QuestionVoteRead,
 )
 
 
@@ -1041,6 +1042,24 @@ def delete_post(*, post_id) -> None:
     post = _get_post(post_id)
     db.session.delete(post)
     db.session.commit()
+
+
+def get_all_writings_by_commons(
+    *, page, per_page, max_per_page, filters, sorters, periods, query
+) -> Pagination:
+    """Select all posts by common parameters.
+
+    TODO
+    : non maintainable, not flexible...
+    : very limited form and functionality of search-filter-sorter...
+    """
+
+    writing_poly =Writing
+    select_ = select(writing_poly)
+
+
+    # handle paginating and return.
+    return db.paginate(select_, page=page, per_page=per_page, max_per_page=max_per_page)
 
 
 def get_all_posts_by_commons_and_category(
